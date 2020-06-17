@@ -48,11 +48,11 @@ class Server:
         #   How it will do?
         #       > Check id is regestered
         #       > match ID and password
-        #       > send response = 'True' if success
+        #       > send response = 'res<in<True' if success
         #       > IF response == 'True'
         #           change Client's status to online
         #           Add Client's Socket to available Sockets
-        #       > send response = 'False' if not success
+        #       > send response = 'res<in<False' if not success
         #   Other
         #
         print("Sign in request form ", id)
@@ -60,7 +60,7 @@ class Server:
             print("ID found ...")
             if str(self.ClientPass[id]) == str(password):
                 print("Password matched ...")
-                rep = 'True'
+                rep = 'res<in<True'
                 sock.sendall(rep.encode('UTF-8'))
                 print(self.ClientPass)
                 print("Adding Client's Socket to Available Clients Lists ...")
@@ -74,11 +74,11 @@ class Server:
                 print(self.CurrentClientStatus)
             else:
                 print("Password not matched ...")
-                rep = 'False'
+                rep = 'res<in<False'
                 sock.sendall(rep.encode('UTF-8'))
         else:
             print("ID not present ...")
-            rep = 'False'
+            rep = 'res<in<False'
             sock.sendall(rep.encode('UTF-8'))
 
     def SignUp(self, password, sock):
@@ -95,18 +95,19 @@ class Server:
         #
         # print("New Sign Up request ...")
         print("Generating Random key ...")
-        temp = random.randint(0, 10000)
-        temp = str(temp)
-        if temp not in self.ClientPass.keys():
+        tID = random.randint(0, self.MaxClient)     # a temp ID
+        tID = str(tID)
+        if tID not in self.ClientPass.keys():
             print("Adding to Client's list ...")
-            self.ClientPass[temp] = str(password)
+            self.ClientPass[tID] = str(password)
             print(self.ClientPass)
             print("Added Successfully ...")
-            print("Sending key to Client ...")
+            print("Sending response to Client ...")
+            temp = "res<up<" + tID
             sock.sendall(temp.encode('UTF-8'))
             print("Sended Successfully ...")
             print("updating Client's status ...")
-            self.CurrentClientStatus[str(temp)] = 'offline'
+            self.CurrentClientStatus[tID] = 'offline'
             print("updated successfully ...")
             print(self.CurrentClientStatus)
         else:

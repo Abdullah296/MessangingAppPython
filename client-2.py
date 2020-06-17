@@ -1,7 +1,7 @@
 import socket   # for creating sockets
 import sys      # for handling exceptions
 import json     # for saving data
-import threading as T
+import threading
 
 class Client:
     MyName = None     # My user name
@@ -23,33 +23,33 @@ class Client:
     # In Request type
     #       SignUp Request
     #           request format: r<up<password
-    #           response format: unique ID
+    #           response format: res<up<unique_Id
     #       SignIn Request
     #           request format: r<in<ID<password
-    #           response format: 'True' or 'False'
-    #       Information Request (for current statuse online/offline)
+    #           response format: res<in<'True'/'False'
+    #       Information Request (for current status online/offline)
     #           request format: r<info<ClientID<ClientID ... or r<info<GroupID
-    #           response format: ID:Status<ID:Status ...
+    #           response format: res<info<ID:Status<ID:Status ...
     # In Command Type
     #       Create Group
     #           request format:c<cg<GroupName
-    #           response format:unique Group ID (g+ID mean starts with g always)
+    #           response format:res<cg<GroupID (g+ID mean starts with g always)
     #       Remove from Group
     #           request format:c<rfg<Member's_ID<Group_ID
-    #           response format:
+    #           response format:res<rfg<'True'/'False'
     #       Add to Group
     #           request format:c<atg<Member's_ID<Group_ID
-    #           response format:
+    #           response format:res<atg<'True'/'False'
     #       Change Admin
     #           request format:c<ca<New_Admin_ID<Group_ID
-    #           response format:
+    #           response format:res<ca<'True'/'False'
     # In Messsage Type
     #       Message to a single Client
     #           request format:m<OtherClient's_ID<message
-    #           response format: no response from server
+    #           response format: m<Sender_ID<message (when ever you will recieve a messaage)
     #       Message in a Group
     #           request format:m<Group_ID<message
-    #           response format: no response from server
+    #           response format: m<Group_ID<Sender_ID<message
     ###############################################################################
     ###############################################################################
 
@@ -174,12 +174,12 @@ class Client:
         #       Other
         self.MyName = input("Enter your User Name :")
         temp = input("Enter Your Password :")
-        temp = "r<up<"+ temp
+        temp = "r<up<" + temp
         self.Socket.sendall(temp.encode('UTF-8'))
-        self.MyId = self.Socket.recv(1024).decode('UTF-8')
+        '''self.MyId = self.Socket.recv(1024).decode('UTF-8')
         print("Sign Up Successfully")
         print("Your user name :", self.MyName)
-        print("Your ID is :", self.MyId)
+        print("Your ID is :", self.MyId)'''
 
     def SignIn(self):   # will do sign in
         #       What it will do?
@@ -198,13 +198,13 @@ class Client:
         temp = input("Enter Your Password :")
         temp = "r<in<"+str(self.MyId)+"<"+str(temp)
         self.Socket.sendall(temp.encode('UTF-8'))
-        temp = self.Socket.recv(1024)
+        '''temp = self.Socket.recv(1024)
         if temp.decode('UTF-8') == 'True':
             print("Sign in successful")
             self.MyStatus = True
         else:
             print("Try again")
-            self.SignIn()
+            self.SignIn()'''
 
     def CreateGroup(self):
         #       What it will do?
@@ -352,9 +352,7 @@ class Client:
                 else:
                     msg = "m<" + OtherClient + "<" + msg
                     self.Socket.sendall(msg.encode('UTF-8'))
-                    
                     msg = input(">>>")
-
 
     def close(self):
         #       What it will do?
@@ -368,19 +366,28 @@ class Client:
         except socket.error as err:
             print("socket closing error :",err)
             sys.exit("Socket closing error")
-            
-            
+
     def Receive(self):
         while True:
-                msg = self.Socket.recv(1024).decode('UTF-8')
-                '''msg = msg.split("<")
-                if msg[0] in self.MyContacts.keys():
-                    print(f"{self.MyContacts[msg[0]]} : ", f"{msg[1]}")
-                else:
-                    print(f"{msg[0]} : ", f"{msg[1]}")'''
-                print(msg)
-                    
-        
+            msg = self.Socket.recv(1024).decode('UTF-8')
+            msg = msg.split("<")
+            if msg[0] == 'res':     # it's a response from a server
+                if msg[1] == 'up':  # response for Sign up request
+                    self.MyId = msg[2]  # setting ID
+                    print("\nSign Up Successfully")
+                    print("Your user name :", self.MyName)
+                    print("Your ID is :", self.MyId)
+                if msg[1] == 'in':
+                    if msg[2] == 'True':
+                        print("\nSign in successful")
+                        self.MyStatus = True
+                    else:
+                        print("\nTry again")
+            elif msg[0] == 'm':     # a message
+                '''if msg[1][0] == 'g':        # a group ID
+                    pass
+                else:       # a user ID
+                    print(f"{msg[1]} : {msg[2]}")'''
 
     def ConnectToServer(self):
         #       What it will do?
@@ -402,8 +409,8 @@ class Client:
         try:
             print("connecting to server :", ServerAdress)
             self.Socket.connect(ServerAdress)
-            thread =T.Thread(target=self.Receive )
-            thread.start()
+            RThread = threading.Thread(target=self.Receive)
+            RThread.start()
         except socket.error as err:
             print("error in connecting to server :", err)
             sys.exit("error in connecting to server :")
