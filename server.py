@@ -198,6 +198,7 @@ class Server:
                     print("client is online ...")
                     print("sending message ...")
                     temp = MyId + "<" + msg
+                    temp = "m<" + temp
                     self.ClientsSockets[id].sendall(temp.encode('UTF-8'))
                     print("sent ...")
                 else:

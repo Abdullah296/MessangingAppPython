@@ -176,10 +176,13 @@ class Client:
         temp = input("Enter Your Password :")
         temp = "r<up<" + temp
         self.Socket.sendall(temp.encode('UTF-8'))
-        '''self.MyId = self.Socket.recv(1024).decode('UTF-8')
-        print("Sign Up Successfully")
-        print("Your user name :", self.MyName)
-        print("Your ID is :", self.MyId)'''
+        msg = self.Socket.recv(1024).decode('UTF-8')
+        msg = msg.split("<")
+        if msg[1] == 'up':  # response for Sign up request
+            self.MyId = msg[2]  # setting ID
+            print("\nSign Up Successfully")
+            print("Your user name :", self.MyName)
+            print("Your ID is :", self.MyId)
 
     def SignIn(self):   # will do sign in
         #       What it will do?
@@ -198,13 +201,16 @@ class Client:
         temp = input("Enter Your Password :")
         temp = "r<in<"+str(self.MyId)+"<"+str(temp)
         self.Socket.sendall(temp.encode('UTF-8'))
-        '''temp = self.Socket.recv(1024)
-        if temp.decode('UTF-8') == 'True':
-            print("Sign in successful")
-            self.MyStatus = True
-        else:
-            print("Try again")
-            self.SignIn()'''
+        msg = self.Socket.recv(1024).decode('UTF-8')
+        msg = msg.split("<")
+        if msg[1] == 'in':
+            if msg[2] == 'True':
+                print("\nSign in successful")
+                self.MyStatus = True
+                RThread = threading.Thread(target=self.Receive)
+                RThread.start()
+            else:
+                print("\nTry again")
 
     def CreateGroup(self):
         #       What it will do?
@@ -327,32 +333,25 @@ class Client:
         #       Other
         print("1. In group")
         print("2. with client")
-        print("3. Exist")
+        print("3. Exit")
         t = input(">>>")
         if t == '1':
             print(self.MyGroups)
             OtherClient = input("Enter Group ID :")
             msg = input(">>>")
             while msg!='\end':
-                if msg == '.':
-                    pass
-                else:
-                    msg = "m<" + OtherClient + "<" + msg
-                    self.Socket.sendall(msg.encode('UTF-8'))                
-                    msg = input(">>>")
+                msg = "m<" + OtherClient + "<" + msg
+                self.Socket.sendall(msg.encode('UTF-8'))
+                msg = input(">>>")
                 
         if t == '2':
             print(self.MyContacts)
             OtherClient = input("Enter Client's ID :")
             msg = input(">>>")
             while msg != '\end':
-                if msg == '.':
-                    print(self.Socket.recv(1024).decode('UTF-8'))
-                    msg = input(">>>")
-                else:
-                    msg = "m<" + OtherClient + "<" + msg
-                    self.Socket.sendall(msg.encode('UTF-8'))
-                    msg = input(">>>")
+                msg = "m<" + OtherClient + "<" + msg
+                self.Socket.sendall(msg.encode('UTF-8'))
+                msg = input(">>>")
 
     def close(self):
         #       What it will do?
@@ -372,22 +371,15 @@ class Client:
             msg = self.Socket.recv(1024).decode('UTF-8')
             msg = msg.split("<")
             if msg[0] == 'res':     # it's a response from a server
-                if msg[1] == 'up':  # response for Sign up request
-                    self.MyId = msg[2]  # setting ID
-                    print("\nSign Up Successfully")
-                    print("Your user name :", self.MyName)
-                    print("Your ID is :", self.MyId)
-                if msg[1] == 'in':
-                    if msg[2] == 'True':
-                        print("\nSign in successful")
-                        self.MyStatus = True
-                    else:
-                        print("\nTry again")
+                pass
             elif msg[0] == 'm':     # a message
-                '''if msg[1][0] == 'g':        # a group ID
+                if msg[1][0] == 'g':        # a group ID
                     pass
                 else:       # a user ID
-                    print(f"{msg[1]} : {msg[2]}")'''
+                    if msg[1] in self.MyContacts.keys():
+                        print(f"{self.MyContacts[msg[1]]} --> {msg[2]}")
+                    else:
+                        print(f"From {msg[1]} --> {msg[2]}")
 
     def ConnectToServer(self):
         #       What it will do?
@@ -409,8 +401,8 @@ class Client:
         try:
             print("connecting to server :", ServerAdress)
             self.Socket.connect(ServerAdress)
-            RThread = threading.Thread(target=self.Receive)
-            RThread.start()
+            '''RThread = threading.Thread(target=self.Receive)
+            RThread.start()'''
         except socket.error as err:
             print("error in connecting to server :", err)
             sys.exit("error in connecting to server :")
