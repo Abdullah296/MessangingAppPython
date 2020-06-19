@@ -116,7 +116,7 @@ class Client:
                 for id, name in self.MyContacts.items():
                     msg = msg + "<" + str(id)
                 self.Socket.sendall(msg.encode('UTF-8'))
-                info = self.Socket.recv(1024).decode('UTF-8')
+                '''info = self.Socket.recv(1024).decode('UTF-8')
                 info = info.split("<")
                 for EachInfo in info[:-1]:
                     EachInfo = EachInfo.split(":")
@@ -124,7 +124,7 @@ class Client:
                         print(f"Name :{self.MyContacts[EachInfo[0]]}", f"ID :{EachInfo[0]}", f"status :{EachInfo[1]}",
                               sep='     ')
                     else:
-                        print(f"Name :Not Saved", f"ID :{EachInfo[0]}", f"status :{EachInfo[1]}", sep='     ')
+                        print(f"Name :Not Saved", f"ID :{EachInfo[0]}", f"status :{EachInfo[1]}", sep='     ')'''
 
         else:
             print("Please Sign in")
@@ -147,7 +147,7 @@ class Client:
             gID = input("Enter Group ID :")
             msg = msg + gID
             self.Socket.sendall(msg.encode('UTF-8'))
-            info = self.Socket.recv(1024).decode('UTF-8')
+            '''info = self.Socket.recv(1024).decode('UTF-8')
             info = info.split("<")
             if info[0][0] == 'S':
                 print(info)
@@ -160,7 +160,7 @@ class Client:
                     elif EachInfo[0] == self.MyId:
                         print(f"You ", f"ID :{EachInfo[0]}", f"status :{EachInfo[1]}", sep='     ')
                     else:
-                        print(f"Name :Not Saved", f"ID :{EachInfo[0]}", f"status :{EachInfo[1]}", sep='     ')
+                        print(f"Name :Not Saved", f"ID :{EachInfo[0]}", f"status :{EachInfo[1]}", sep='     ')'''
         else:
             print("Please Sign in")
 
@@ -371,7 +371,19 @@ class Client:
             msg = self.Socket.recv(1024).decode('UTF-8')
             msg = msg.split("<")
             if msg[0] == 'res':     # it's a response from a server
-                pass
+                if msg[1] == 'info':    # an info request responce
+                    if msg[2][0] == 'S':
+                        print(msg[2])
+                    else:
+                        for EachInfo in msg[2:-1]:
+                            EachInfo = EachInfo.split(":")
+                            if EachInfo[0] in self.MyContacts.keys():
+                                print(f"Name :{self.MyContacts[EachInfo[0]]}", f"ID :{EachInfo[0]}",
+                                      f"status :{EachInfo[1]}",
+                                      sep='     ')
+                            else:
+                                print(f"Name :Not Saved", f"ID :{EachInfo[0]}", f"status :{EachInfo[1]}", sep='     ')
+
             elif msg[0] == 'm':     # a message
                 if msg[1][0] == 'g':        # a group ID
                     pass
