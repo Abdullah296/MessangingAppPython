@@ -179,8 +179,7 @@ class Server:
                     if EachMember in self.ClientsSockets.keys():
                         print("client is online ...")
                         print("sending message ...")
-                        temp = "In Group:"+self.GroupNames[id]+" By"
-                        temp = temp + "<" + str(MyId) + "<" + msg
+                        temp = "m<" + str(id) + "<" + str(MyId) + "<" + msg
                         self.ClientsSockets[EachMember].sendall(temp.encode('UTF-8'))
                         print("message sent ...")
     
