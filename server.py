@@ -351,12 +351,12 @@ class Server:
                 self.Admins[msg[1]] = msg[0]    # setting new Admin
                 print("admin changed ...")
                 print(self.Admins)
-                rep = "Admin changed to " + msg[0]
+                rep = "res<ca<True<" + msg[0]
                 print("sending reply to client ...")
                 sock.sendall(rep.encode('UTF-8'))
                 print("sent ...")
             else:
-                rep = "You are not the admin of this group"
+                rep = "res<ca<False<You are not the admin of this group"
                 print("sending reply to client ...")
                 sock.sendall(rep.encode('UTF-8'))
                 print("sent ...")
