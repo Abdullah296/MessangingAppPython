@@ -112,7 +112,7 @@ class Server:
             print(self.CurrentClientStatus)
         else:
             print("Key is present already ...")
-            self.SignUp(password)
+            self.SignUp(password, sock)
 
     def CheckBuffer(self, stime):
         #   What it will do?
@@ -268,6 +268,7 @@ class Server:
                     rep = rep + str(EachId) + ":Not found<"
 
         print("gathered ...")
+        rep = "res<info<" + rep
         print(rep)
         print("sending to client ...")
         sock.sendall(str(rep).encode('UTF-8'))
