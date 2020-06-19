@@ -32,8 +32,8 @@ class Client:
     #           response format: res<info<ID:Status<ID:Status ...
     # In Command Type
     #       Create Group
-    #           request format:c<cg<GroupName
-    #           response format:res<cg<GroupID (g+ID mean starts with g always)
+    #           request format:c<cg<GroupName<ID:ID:ID
+    #           response format:res<cg<GroupID<GroupName (g+ID mean starts with g always)
     #       Remove from Group
     #           request format:c<rfg<Member's_ID<Group_ID
     #           response format:res<rfg<'True'/'False'
@@ -228,10 +228,6 @@ class Client:
             a = input("Enter User Id to Add in this Group:")
             rep = rep + a + ":"
         self.Socket.sendall(rep.encode('UTF-8'))
-        a = self.Socket.recv(1024)
-        a = a.decode('UTF-8')
-        self.MyGroups[str(a)] = tname
-        print(self.MyGroups)
 
     def ChangeAdmin(self):
         #       What it will do?
@@ -370,6 +366,7 @@ class Client:
         while True:
             msg = self.Socket.recv(1024).decode('UTF-8')
             msg = msg.split("<")
+            print(msg) # for debug purpose
             if msg[0] == 'res':     # it's a response from a server
                 if msg[1] == 'info':    # an info request responce
                     if msg[2][0] == 'S':
@@ -383,6 +380,9 @@ class Client:
                                       sep='     ')
                             else:
                                 print(f"Name :Not Saved", f"ID :{EachInfo[0]}", f"status :{EachInfo[1]}", sep='     ')
+                if msg[1] == 'cg':
+                    self.MyGroups[msg[2]] = msg[3]
+                    print(self.MyGroups)
 
             elif msg[0] == 'm':     # a message
                 if msg[1][0] == 'g':        # a group ID

@@ -316,6 +316,8 @@ class Server:
             print(self.Admins)
             print("updated ...")
             print("Sending key to Client ...")
+            # building response
+            temp = "res<cg<" + temp + "<" + msg[0]
             sock.sendall(temp.encode('UTF-8'))
             print("Sended Successfully ...")
         else:
