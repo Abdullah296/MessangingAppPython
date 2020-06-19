@@ -386,7 +386,10 @@ class Client:
 
             elif msg[0] == 'm':     # a message
                 if msg[1][0] == 'g':        # a group ID
-                    pass
+                    if msg[2] in self.MyContacts.keys():
+                        print(f"In Group --> {self.MyGroups[msg[1]]}<->{self.MyContacts[msg[2]]} --> {msg[3]}")
+                    else:
+                        print(f"In Group --> {self.MyGroups[msg[1]]}<->{msg[2]} --> {msg[3]}")
                 else:       # a user ID
                     if msg[1] in self.MyContacts.keys():
                         print(f"{self.MyContacts[msg[1]]} --> {msg[2]}")
