@@ -42,7 +42,7 @@ class Client:
     #           response format:res<atg<'True'/'False'
     #       Change Admin
     #           request format:c<ca<New_Admin_ID<Group_ID
-    #           response format:res<ca<'True'/'False'
+    #           response format:res<ca<'True'/'False'<New_Admin
     # In Messsage Type
     #       Message to a single Client
     #           request format:m<OtherClient's_ID<message
@@ -247,10 +247,8 @@ class Client:
         gid = input("Enter group Id :")
         self.Contacts()
         id = input("Enter New Admins ID :")
-        command = command + str(id)+ "<" + str(gid)
+        command = command + str(id) + "<" + str(gid)
         self.Socket.sendall(command.encode('UTF-8'))
-        rep = self.Socket.recv(1024)
-        print(rep.decode('UTF-8'))
 
     def RemoveFromGroup(self):
         #       What it will do?
@@ -383,6 +381,18 @@ class Client:
                 if msg[1] == 'cg':
                     self.MyGroups[msg[2]] = msg[3]
                     print(self.MyGroups)
+                if msg[1] == 'ca':
+
+                    if msg[2] == 'True':
+                        print("Group Admin has changed")
+                        if msg[3] in self.MyContacts.keys():
+                            print(f"New Group Admin is {self.MyContacts[msg[3]]}")
+                        else:
+                            print(f"New Group Admin is {msg[3]}")
+
+                    elif msg[2] == 'False':
+                        print("Group Admin can not be changed")
+                        print(msg[3])
 
             elif msg[0] == 'm':     # a message
                 if msg[1][0] == 'g':        # a group ID
