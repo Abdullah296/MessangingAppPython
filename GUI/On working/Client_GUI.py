@@ -19,7 +19,7 @@ class Client:
     # MyContacts = {'ID':'Name'}
     MyStatus = False   # I am online or offline
     Socket = None 
-
+################################################################################################################################## 
     def ConnectToServer(self):
         #       What it will do?
         #           it will connect to server
@@ -45,7 +45,10 @@ class Client:
             sys.exit("error in connecting to server :")
         else:
             print("connected to the server")
-
+            
+            
+################################################################################################################################## 
+            
     def Decoder(self):
         #       What it will do?
         #           it will ask user for to enter choise or what he/she wants to do
@@ -59,47 +62,9 @@ class Client:
                 self.ConnectToServer()
             elif self.MyStatus is False:     # I have't Sign in
                 self.signin()
-            '''   
-            else:
-                print("1. Create New Group")
-                print("2. Change Group Admin")
-                print("3. Add to Group")
-                print("4. Remove from Group")
-                print("5. Chat")
-                print("6. Go Offline")
-                print("7. My Profile")
-                print("8. Add New Contact")
-                print("9. Contacts")
-                print("a. View Group Members")
-                print("b. Exit")
-                temp = input(">>>")
-                if temp is '1':
-                    self.CreateGroup()
-                elif temp is '2':
-                    self.ChangeAdmin()
-                elif temp is '3':
-                    self.AddToGroup()
-                elif temp is '4':
-                    self.RemoveFromGroup()
-                elif temp is '5':
-                    self.Chat()
-                elif temp is '6':
-                    self.GoOffline()
-                elif temp is '7':
-                    self.MyProfile()
-                elif temp is '8':
-                    self.AddContact()
-                elif temp is '9':
-                    self.Contacts()
-                elif temp is 'a':
-                    self.GroupMembers()
-                elif temp is 'b':
-                    #self.SaveData()
-                    self.Socket.close()
-                    break
-                else:
-                    print("Please Enter a Valid Option")
-    '''
+################################################################################################################################## 
+                
+                
     def SignUp(self,name,password,email,answer):  
         
        # print("name is : ",name)
@@ -162,7 +127,7 @@ class Client:
         loginButton = Button(root1, text="Signup", command=submit1,  bg = "light green", fg = "dark green").grid(row=11, column=0)
     
         root1.mainloop()
-
+################################################################################################################################## 
     def SignIn(self, name,uid,passw):   # will do sign in
         #       What it will do?
         #           it will sign in to an already created account
@@ -188,6 +153,8 @@ class Client:
             print("Sign in successful")
             self.MyStatus = True
             self.validateLogin()
+            RThread = threading.Thread(target=self.Receive)
+            RThread.start()
         else:
             print("Try again")
             self.tryagain()
@@ -230,24 +197,139 @@ class Client:
         loginButton = Button(Gui, text="Login", command=submit,  bg = "light green", fg = "dark green").grid(row=7, column=2)
         Signup1 = Button(Gui, text="Signup", command=self.presignup, bg = "light green", fg = "dark green").grid(row=7, column=3)
         Gui.mainloop()
-           
+    
+##################################################################################################################################     
+    def AddToContact(self, name, idd):
+        #       What it will do?
+        #           it will save a new contact
+        #       How it will do?
+        #           > take Client's ID, name from user
+        #           > add it to self.MyContacts
+        #           (it does not make any request to server)
+        #       Other
+        if self.MyStatus is True:
+            tid = idd
+            tname = name
+            print(tid)
+            print(tname)
+            if tid not in self.MyContacts.keys():
+                self.MyContacts[str(tid)] = tname
+                print("Added successfully")
+                '''global food_list 
+                global OptionList
+                food_list = [ ]
+                food_list=list(self.MyContacts.values())
+                OptionList = food_list'''
+                
+            else:
+                print("User Already Exist")
+        else:
+            print("Please Sign in")
+        
+    def AddContact(self):
+        global nammee
+        global tid
+    
+        global root4
+        root4 = Tk()
+        
+        nammee = StringVar()
+        tid = StringVar()
+        
+        root4.geometry('300x300')  
+        root4.title('Messaging app')
+        
+    
+        Label(root4, text="Add Contact",  bg = "light green", font= ("bold", 12)).grid(row=1, column= 3, columnspan = 3)
+        Label(root4, text="",  bg = "light green").grid(row=2, column= 3)
+        
+        #photo = PhotoImage(file = r"C:\Users\Abdullah\Pictures\contactpic.jpg")
+        #Label(root4, text="ENTER USERNAME AND PASSWORD TO CONTINUE", image = photo, bg = "light green", font= ("bold", 8)).grid(row= 3, column = 0, columnspan = 4) 
+        Label(root4, text="",  bg = "light green").grid(row=4, column= 0)
+        Label(root4, text="",  bg = "light green").grid(row=4, column= 1)
+        Label(root4, text="User Name", width = 20, bg = "light green", font= ("bold", 10)).grid(row=4, column=2)
+        Entry(root4, textvariable=nammee).grid(row=4, column=3)
+        Label(root4,text="ID", width = 20, bg = "light green", font= ("bold", 10)).grid(row=5, column=2)  
+        Entry(root4, textvariable=tid, ).grid(row=5, column=3)  
+        
+        def submit4():
+            self.AddToContact(nammee.get(),tid.get())
+            
+        loginButton = Button(root4, text="Save contact", command=submit4,  bg = "light green", fg = "dark green").grid(row=7, column=2)
+        root4.mainloop()
+    
+    
+    
+            
+    def MyProfile(self):    # will print My basics info
+        #       What it will do?
+        #           it will print User Name & ID
+        #       How it will do?
+        #
+        #       Other
+        if self.MyStatus is True:
+            print("User Name :", self.MyName)
+            print("User ID :", self.MyId)
+            Display.configure(state='normal')
+            Display.insert('end', '\n'+"Profile info:  ")
+            Display.insert('end', '\n'+"User Name :\n"+self.MyName)
+            Display.insert('end', '\n'+"User ID :"+self.MyId)
+            Display.configure(state='disabled')
+##################################################################################################################################             
+    
     def login(self):
+       global root2
+       global Display
+       
        root2 = Tk()
        root2.geometry('500x400')  
        root2.title('Successfully login')
-       
+   
        TopFrame = Frame(root2).pack(side=TOP)
-         
+    ################################################################################################################################## 
        LeftFrame = Frame(TopFrame)
        
-       Label(LeftFrame, text = "Send Message",  height=1, width=15).pack(side=TOP)
+       Label(LeftFrame, text = "    Options: ",  height=1, width=15).pack(side=TOP)
+       Option = ["MyProfile","Add Contacts","GroupMembers","Signout"]
+       variable1 = StringVar(root2)
+       variable1.set(Option[0])
+       opt1 = OptionMenu(LeftFrame, variable1, *Option)
+       opt1.config(width=13, font=('Helvetica', 9))
+       opt1.pack(side="top")
+       def printvariable(*args):
+           
+           if variable1.get() == "MyProfile":
+               self.MyProfile()
+               
+           elif variable1.get() == "Add Contacts":
+               self.AddContact()
+           
+           elif variable1.get() == "GroupMembers":
+               pass
+           
+           elif variable1.get() == "Signout":
+               self.Socket.close()
+               self.Signout()
+               
+           
+           
+       variable1.trace("w", printvariable)
+   
        
-       OptionList = ["Abdullah","Abdurrehman","Malik","Usama","Wajiha","Ahmad Tariq"] 
+       #OptionList = ["Abdullah","Abdurrehman","Malik","Usama","Wajiha","Ahmad Tariq"] 
+       
+       OptionList = self.MyContacts.keys()
        variable = StringVar(root2)
        variable.set(OptionList[0])
        opt = OptionMenu(LeftFrame, variable, *OptionList)
        opt.config(width=13, font=('Helvetica', 9))
        opt.pack(side="top")
+       '''
+       menu = opt["menu"]
+       menu.delete(0, "end")
+       for string in food_list:
+            menu.add_command(label=string, 
+                             command=lambda value=string: variable.set(value))'''
        
        scrollBar = Scrollbar(LeftFrame)
        scrollBar.pack(side=RIGHT, fill=Y)
@@ -255,8 +337,13 @@ class Client:
        Display.pack(side=TOP, fill=Y, padx=(5, 0))
        scrollBar.config(command=Display.yview)
        Display.config(yscrollcommand=scrollBar.set, background="#F4F6F7", highlightbackground="grey",state = 'disabled' )
+       Display.configure(state='normal')
+       Display.insert('end', 'History: ')
+       Display.configure(state='disabled')
+       
        def Namechange(*args):
            Name.configure(state='normal')
+           Name.delete(1.0, END)
            Name.insert('end', variable.get())
            Name.configure(state='disabled')
            
@@ -269,21 +356,21 @@ class Client:
        variable.trace("w", callback)
        LeftFrame.pack(side=LEFT)
         
-       
+    ##################################################################################################################################
        RightFrame = Frame(TopFrame).pack(side=RIGHT)
           
        displayFrame = Frame(RightFrame)
        
        UpperFrame = Frame(displayFrame,  height=2, width=15)
-       Name = Text(LeftFrame, height=2, width=10)
+       Name = Text(UpperFrame, height=2, width=20)
        Name.pack(side=LEFT, fill=Y)
        Name.config(state = 'disabled' )      
        
-       #Label(UpperFrame, text = "Option", height=2, width=7).pack(side=RIGHT)
+       
        UpperFrame.pack(side=TOP)
        
        LowerFrame = Frame(displayFrame)
-       #lblLine = Label(displayFrame, text="*********************************************************************").pack()
+       
        scrollBar = Scrollbar(LowerFrame)
        scrollBar.pack(side=RIGHT, fill=Y)
        tkDisplay = Text(LowerFrame, height=18, width=55)
@@ -295,16 +382,74 @@ class Client:
        
        displayFrame.pack(side=TOP)
        
-       icon = PhotoImage(file='C:\\Users\Abdullah\Documents\Python\gh.png')
-       #icon = icon.subsample(2,2)
+       
+       
+       def sendmsg(*args):
+           
+           tkDisplay.configure(state='normal')
+           tkDisplay.insert('end', '\n You: '+tkmessage.get())
+           tkDisplay.configure(state='disabled')
+           
        
        BottomFrame = Frame(RightFrame)
-       tkMessage = Text(BottomFrame, height=2, width=35).pack(side=LEFT, padx=(5, 13), pady=(5, 10))
-       btnConnect = Button(BottomFrame, text = "Send", height=1, width=5).pack(side=RIGHT)
-       #btnConnect.config(image =icon)
+       tkmessage = StringVar(root2)
+       
+       tkkkkk = Entry(BottomFrame, textvariable=tkmessage, width=40,  ).pack(side=LEFT, padx=(5, 13), pady=(5, 10),  )
+       btnConnect = Button(BottomFrame, text = "Send", height=1, width=5, command=sendmsg).pack(side=RIGHT)
        BottomFrame.pack(side=TOP)
-   
-       root2.mainloop() 
+    ##################################################################################################################################
+       root2.mainloop()
+       
+##################################################################################################################################        
+    def Receive(self):
+        while True:
+            msg = self.Socket.recv(1024).decode('UTF-8')
+            msg = msg.split("<")
+            
+            print(msg) # for debug purpose
+            
+            if msg[0] == 'res':     # it's a response from a server
+                if msg[1] == 'info':    # an info request responce
+                    if msg[2][0] == 'S':
+                        print(msg[2])
+                    else:
+                        for EachInfo in msg[2:-1]:
+                            EachInfo = EachInfo.split(":")
+                            if EachInfo[0] in self.MyContacts.keys():
+                                print(f"Name :{self.MyContacts[EachInfo[0]]}", f"ID :{EachInfo[0]}",
+                                      f"status :{EachInfo[1]}",
+                                      sep='     ')
+                            else:
+                                print(f"Name :Not Saved", f"ID :{EachInfo[0]}", f"status :{EachInfo[1]}", sep='     ')
+                if msg[1] == 'cg':
+                    self.MyGroups[msg[2]] = msg[3]
+                    print(self.MyGroups)
+                if msg[1] == 'ca':
+
+                    if msg[2] == 'True':
+                        print("Group Admin has changed")
+                        if msg[3] in self.MyContacts.keys():
+                            print(f"New Group Admin is {self.MyContacts[msg[3]]}")
+                        else:
+                            print(f"New Group Admin is {msg[3]}")
+
+                    elif msg[2] == 'False':
+                        print("Group Admin can not be changed")
+                        print(msg[3])
+
+            elif msg[0] == 'm':     # a message
+                if msg[1][0] == 'g':        # a group ID
+                    if msg[2] in self.MyContacts.keys():
+                        print(f"In Group --> {self.MyGroups[msg[1]]}<->{self.MyContacts[msg[2]]} --> {msg[3]}")
+                    else:
+                        print(f"In Group --> {self.MyGroups[msg[1]]}<->{msg[2]} --> {msg[3]}")
+                else:       # a user ID
+                    if msg[1] in self.MyContacts.keys():
+                        print(f"{self.MyContacts[msg[1]]} --> {msg[2]}")
+                    else:
+                        print(f"From {msg[1]} --> {msg[2]}")   
+       
+##################################################################################################################################        
        
     def savesignup(self):
         root1.destroy()
@@ -321,6 +466,10 @@ class Client:
     def validateLogin(self):
         Gui.destroy()
         self.login()
+        
+    def Signout(self):
+        root2.destroy()
+        self.signin()
    
     def __init__(self):
         #       What it will do?

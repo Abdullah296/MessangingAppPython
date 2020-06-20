@@ -9,6 +9,7 @@ from tkinter import *
 from functools import partial
 from tkinter import messagebox
 from PIL import Image, ImageTk
+from tkinter.ttk import *
 
 
 def signin():
@@ -43,6 +44,38 @@ def signin():
     loginButton = Button(Gui, text="Login", command=validateLogin,  bg = "light green", fg = "dark green").grid(row=6, column=2)
     Signup1 = Button(Gui, text="Signup", command=presignup, bg = "light green", fg = "dark green").grid(row=6, column=3)
     Gui.mainloop()
+
+ 
+def AddContact():
+    global nammee
+    global tid
+    
+    
+    
+    global root4
+    root4 = Tk()
+    
+    nammee = StringVar()
+    tid = StringVar()
+    
+    
+    
+    root4.geometry('500x400')  
+    root4.title('Messaging app')
+    root4.configure(background = "light green")
+
+    Label(root4, text="Add Contact",  bg = "light green", font= ("bold", 12)).grid(row=1, column= 3, columnspan = 3)
+    Label(root4, text="",  bg = "light green").grid(row=2, column= 3)
+    
+    #photo = PhotoImage(file = r"C:\Users\Abdullah\Pictures\contactpic.jpg")
+    #Label(root4, text="ENTER USERNAME AND PASSWORD TO CONTINUE", image = photo, bg = "light green", font= ("bold", 8)).grid(row= 3, column = 0, columnspan = 4) 
+    Label(root4, text="",  bg = "light green").grid(row=4, column= 0)
+    Label(root4, text="",  bg = "light green").grid(row=4, column= 1)
+    Label(root4, text="User Name", width = 20, bg = "light green", font= ("bold", 10)).grid(row=4, column=2)
+    Entry(root4, textvariable=nammee).grid(row=4, column=3)
+    Label(root4,text="ID", width = 20, bg = "light green", font= ("bold", 10)).grid(row=5, column=2)  
+    Entry(root4, textvariable=tid, ).grid(row=5, column=3)  
+    root4.mainloop()
 
     
 def signup():
@@ -95,11 +128,23 @@ def login():
    root2.geometry('500x400')  
    root2.title('Successfully login')
    
+   #tkMessage = StringVar()
+   
    TopFrame = Frame(root2).pack(side=TOP)
-     
+################################################################################################################################## 
    LeftFrame = Frame(TopFrame)
    
    Label(LeftFrame, text = "Send Message",  height=1, width=15).pack(side=TOP)
+   Option = ["MyProfile","Contacts","GroupMembers","Signout"]
+   variable1 = StringVar(root2)
+   variable1.set(Option[0])
+   opt1 = OptionMenu(LeftFrame, variable1, *Option)
+   opt1.config(width=13, font=('Helvetica', 9))
+   opt1.pack(side="top")
+   def printvariable(*args):
+       print(variable1.get())
+   variable1.trace("w", printvariable)
+   
    
    OptionList = ["Abdullah","Abdurrehman","Malik","Usama","Wajiha","Ahmad Tariq"] 
    variable = StringVar(root2)
@@ -116,6 +161,7 @@ def login():
    Display.config(yscrollcommand=scrollBar.set, background="#F4F6F7", highlightbackground="grey",state = 'disabled' )
    def Namechange(*args):
        Name.configure(state='normal')
+       Name.delete(1.0, END)
        Name.insert('end', variable.get())
        Name.configure(state='disabled')
        
@@ -128,21 +174,21 @@ def login():
    variable.trace("w", callback)
    LeftFrame.pack(side=LEFT)
     
-   
+##################################################################################################################################
    RightFrame = Frame(TopFrame).pack(side=RIGHT)
       
    displayFrame = Frame(RightFrame)
    
    UpperFrame = Frame(displayFrame,  height=2, width=15)
-   Name = Text(LeftFrame, height=2, width=10)
+   Name = Text(UpperFrame, height=2, width=20)
    Name.pack(side=LEFT, fill=Y)
    Name.config(state = 'disabled' )      
    
-   #Label(UpperFrame, text = "Option", height=2, width=7).pack(side=RIGHT)
+   
    UpperFrame.pack(side=TOP)
    
    LowerFrame = Frame(displayFrame)
-   #lblLine = Label(displayFrame, text="*********************************************************************").pack()
+   
    scrollBar = Scrollbar(LowerFrame)
    scrollBar.pack(side=RIGHT, fill=Y)
    tkDisplay = Text(LowerFrame, height=18, width=55)
@@ -154,15 +200,28 @@ def login():
    
    displayFrame.pack(side=TOP)
    
-   icon = PhotoImage(file='C:\\Users\Abdullah\Documents\Python\gh.png')
-   #icon = icon.subsample(2,2)
+   
+   
+   
+       
+       
    
    BottomFrame = Frame(RightFrame)
-   tkMessage = Text(BottomFrame, height=2, width=35).pack(side=LEFT, padx=(5, 13), pady=(5, 10))
-   btnConnect = Button(BottomFrame, text = "Send", height=1, width=5).pack(side=RIGHT)
-   #btnConnect.config(image =icon)
+   tkmessage = StringVar(root2)
+   
+   hello = Entry(BottomFrame, textvariable=tkmessage, width=40,  ).pack(side=LEFT, padx=(5, 13), pady=(5, 10),  )
+   btnConnect = Button(BottomFrame, text = "Send", height=1, width=5, command=sendmsg).pack(side=RIGHT)
    BottomFrame.pack(side=TOP)
    
+   def sendmsg(*args):
+       
+       tkDisplay.configure(state='normal')
+       tkDisplay.insert('end', '\n You: '+tkmessage.get())
+       if hello:
+           hello.delete(first=0,last=100)
+       tkDisplay.configure(state='disabled')
+       
+##################################################################################################################################
    root2.mainloop()
     
 
@@ -183,5 +242,5 @@ def validateLogin():
     Gui.destroy()
     login()
 
-signin()
+AddContact()
 
