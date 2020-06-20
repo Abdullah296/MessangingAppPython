@@ -1,0 +1,9 @@
+problems:
+
+1.  when creating group, send group info to every client
+2.  change admin works fine, but thats problem other client doesn't have info about that group.
+3.  add to group and remove from group left
+4.  chat is good.
+5.  offline and Exit are almost same, so make one function about them
+6.  My profile, Add new Contact, Contact working fine.
+7.  View Group member is fine if you create that group, same issue of point 1.
