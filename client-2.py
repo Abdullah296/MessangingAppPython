@@ -39,7 +39,7 @@ class Client:
     #           response format:res<rfg<'True'/'False'<message from server
     #       Add to Group
     #           request format:c<atg<Member's_ID<Group_ID
-    #           response format:res<atg<'True'/'False'
+    #           response format:res<atg<'True'/'False'<message from server
     #       Change Admin
     #           request format:c<ca<New_Admin_ID<Group_ID
     #           response format:res<ca<'True'/'False'<New_Admin
@@ -278,7 +278,13 @@ class Client:
         #           > make request to server
         #           > response from server
         #       Other
-        pass
+        req = "c<atg<"
+        print(self.MyGroups)
+        gID = input("Enter group ID: ")
+        print(self.MyContacts)
+        cID = input("Enter new member ID: ")
+        req = req + cID + "<" + gID
+        self.Socket.sendall(req.encode('UTF-8'))
 
     def GoOffline(self):    # will disconnect from server
         #       What it will do?
@@ -404,6 +410,11 @@ class Client:
                         print(msg[3])
                     elif msg[2] == 'False':     # can not be removed
                         print("Can not be Removed")
+                        print(msg[3])
+                if msg[1] == 'atg':     # add to group responce
+                    if msg[2] == 'True':    # added to group
+                        print(msg[3])
+                    elif msg[2] == 'False':     # can not be added to group
                         print(msg[3])
             elif msg[0] == 'm':     # a message
                 if msg[1][0] == 'g':        # a group ID
