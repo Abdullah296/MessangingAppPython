@@ -36,7 +36,7 @@ class Client:
     #           response format:res<cg<GroupID<GroupName (g+ID mean starts with g always)
     #       Remove from Group
     #           request format:c<rfg<Member's_ID<Group_ID
-    #           response format:res<rfg<'True'/'False'
+    #           response format:res<rfg<'True'/'False'<message from server
     #       Add to Group
     #           request format:c<atg<Member's_ID<Group_ID
     #           response format:res<atg<'True'/'False'
@@ -145,6 +145,7 @@ class Client:
             for gID, Name in self.MyGroups.items():
                 print(f"Group ID :{gID} Group Name :{Name}")
             gID = input("Enter Group ID :")
+            # yield gID
             msg = msg + gID
             self.Socket.sendall(msg.encode('UTF-8'))
             '''info = self.Socket.recv(1024).decode('UTF-8')
@@ -161,6 +162,7 @@ class Client:
                         print(f"You ", f"ID :{EachInfo[0]}", f"status :{EachInfo[1]}", sep='     ')
                     else:
                         print(f"Name :Not Saved", f"ID :{EachInfo[0]}", f"status :{EachInfo[1]}", sep='     ')'''
+            return str(gID)
         else:
             print("Please Sign in")
 
@@ -260,7 +262,11 @@ class Client:
         #           > make request to server
         #           > take response from the server ('Admin changed'/'You are not the admin of this group')
         #       Other
-        pass
+        gID = self.GroupMembers()
+        cID = input("Select Group Member: ")
+        req = "c<rfg<" + cID + "<" + gID
+        print(req)
+        self.Socket.sendall(req.encode('UTF-8'))
 
     def AddToGroup(self):
         #       What it will do?
@@ -382,7 +388,6 @@ class Client:
                     self.MyGroups[msg[2]] = msg[3]
                     print(self.MyGroups)
                 if msg[1] == 'ca':
-
                     if msg[2] == 'True':
                         print("Group Admin has changed")
                         if msg[3] in self.MyContacts.keys():
@@ -393,7 +398,13 @@ class Client:
                     elif msg[2] == 'False':
                         print("Group Admin can not be changed")
                         print(msg[3])
-
+                if msg[1] == 'rfg':     # remove from group request, responce
+                    if msg[2] == 'True':    # removed
+                        print("Removed from group")
+                        print(msg[3])
+                    elif msg[2] == 'False':     # can not be removed
+                        print("Can not be Removed")
+                        print(msg[3])
             elif msg[0] == 'm':     # a message
                 if msg[1][0] == 'g':        # a group ID
                     if msg[2] in self.MyContacts.keys():
