@@ -12,6 +12,12 @@ class Client:
     # MyContacts = {'ID':'Name'}
     MyStatus = False   # I am online or offline
     Socket = None     # socket
+    Notifications = {'Requests': {}, 'Messages': []}
+    # formate:
+    # Notification = {
+    #                   'Requests' : { 'request' : 'Responce'}
+    #                   'Messages' : []
+    #                   }
 
     ###############################################################################
     ###############################################################################
@@ -20,6 +26,7 @@ class Client:
     # 1. Request type (starts with: r<)
     # 2. Command type (starts with: c<)
     # 3. message type (starts with: m<)
+    # 4. request from server (starts with: req<)
     # In Request type
     #       SignUp Request
     #           request format: r<up<password
@@ -50,6 +57,16 @@ class Client:
     #       Message in a Group
     #           request format:m<Group_ID<message
     #           response format: m<Group_ID<Sender_ID<message
+    # request from server type
+    #       Group Joining Request:
+    #           request from server : req<gjr<Group_ID<Group_Name
+    #           responce to server  : res<gjr<GID<Responce
+    #
+    # Responce types:
+    #           yes : agree to join group
+    #           not : not agree to join group
+    #           pen : pending responce
+    # by default server will use 'pen' or pending responce
     ###############################################################################
     ###############################################################################
 
@@ -372,10 +389,62 @@ class Client:
             print("socket closing error :",err)
             sys.exit("Socket closing error")
 
+    def ViewMesssages(self):
+        if len(self.Notifications['Messages']) == 0:
+            print("No Message")
+        else:
+            for EachMessage in self.Notifications['Messages']:
+                print(EachMessage)
+            # removing printed messages from self.Notifications['Messages']
+            self.Notifications['Messages'] = []
+
+    def ViewRequests(self):
+        if len(self.Notifications['Requests']) == 0:
+            print("\nNo Request")
+        else:
+            i = 0
+            print(self.Notifications['Requests'])
+            for EachRequest, resp in self.Notifications['Requests'].items():
+                EachRequest = EachRequest.split("<")
+                tstr = f"{i}. Group ID: {EachRequest[2]} Group Name: {EachRequest[3]} Present Responce: {resp}"
+                print(tstr)
+                i = i + 1
+
+            print("1. Change Responce")
+            print("2. Exist")
+            op = input(">>>")
+            if op == '1':
+                rno = input("Enter Request No: ")
+                print("Enter 'yes' (for joining)")
+                print("Enter 'no' (for rejecting)")
+                print("Enter 'pen' (for latter)")
+                resp = input(">>> ")
+                if resp != 'pen':
+                    ############################
+                    # building responce for sending to server
+                    gID = input("Enter Group ID: ")
+                    resp = "res<gjr<" + gID + "<" + resp
+                    self.Socket.sendall(resp.encode('UTF-8'))
+                    #del self.Notifications['Requests'][]
+
+
+    def NotificationHandler(self):
+        # it will handler Notification recieved by client
+        # it will handel request and Messages
+        if len(self.Notifications['Requests']) == 0:
+            print("\nNo Request")
+        else:
+            print(f"Got Requests ({len(self.Notifications['Requests'])})")
+        if len(self.Notifications['Messages']) == 0:
+            print("No Message")
+        else:
+            print(f"Got Messages ({len(self.Notifications['Messages'])})")
+
     def Receive(self):
         while True:
-            msg = self.Socket.recv(1024).decode('UTF-8')
-            msg = msg.split("<")
+            msgS = self.Socket.recv(1024).decode('UTF-8')
+            print(msgS)
+            msg = msgS.split("<")
             print(msg) # for debug purpose
             if msg[0] == 'res':     # it's a response from a server
                 if msg[1] == 'info':    # an info request responce
@@ -416,17 +485,33 @@ class Client:
                         print(msg[3])
                     elif msg[2] == 'False':     # can not be added to group
                         print(msg[3])
+                if msg[1] == 'gjr':     # responce on group joining responce
+                    if msg[4] == 'True':    # added to the group
+                        self.MyGroups[msg[2]] = msg[3]  # setting group_ID and group_Name
+                        print("added to the group")
+                    elif msg[4] == 'False':
+                        print("can not be added to the group")
             elif msg[0] == 'm':     # a message
                 if msg[1][0] == 'g':        # a group ID
                     if msg[2] in self.MyContacts.keys():
-                        print(f"In Group --> {self.MyGroups[msg[1]]}<->{self.MyContacts[msg[2]]} --> {msg[3]}")
+                        tmsg = f"In Group --> {self.MyGroups[msg[1]]}<->{self.MyContacts[msg[2]]} --> {msg[3]}"
+                        self.Notifications['Messages'].append(tmsg)
                     else:
-                        print(f"In Group --> {self.MyGroups[msg[1]]}<->{msg[2]} --> {msg[3]}")
+                        tmsg = f"In Group --> {self.MyGroups[msg[1]]}<->{msg[2]} --> {msg[3]}"
+                        self.Notifications['Messages'].append(tmsg)
                 else:       # a user ID
                     if msg[1] in self.MyContacts.keys():
-                        print(f"{self.MyContacts[msg[1]]} --> {msg[2]}")
+                        tmsg = f"{self.MyContacts[msg[1]]} --> {msg[2]}"
+                        self.Notifications['Messages'].append(tmsg)
                     else:
-                        print(f"From {msg[1]} --> {msg[2]}")
+                        tmsg = f"From {msg[1]} --> {msg[2]}"
+                        self.Notifications['Messages'].append(tmsg)
+                self.NotificationHandler()
+            elif msg[0] == 'req':   # request from server
+                if msg[1] == 'gjr':     # a group joining request
+                    self.Notifications['Requests'][msgS] = 'pen'
+                    print(self.Notifications)
+                self.NotificationHandler()
 
     def ConnectToServer(self):
         #       What it will do?
@@ -494,7 +579,9 @@ class Client:
                 print("8. Add New Contact")
                 print("9. Contacts")
                 print("a. View Group Members")
-                print("b. Exit")
+                print("b. View Messages")
+                print("c. View Requests")
+                print("d. Exit")
                 temp = input(">>>")
                 if temp is '1':
                     self.CreateGroup()
@@ -517,6 +604,10 @@ class Client:
                 elif temp is 'a':
                     self.GroupMembers()
                 elif temp is 'b':
+                    self.ViewMesssages()
+                elif temp is 'c':
+                    self.ViewRequests()
+                elif temp is 'd':
                     #self.SaveData()
                     self.Socket.close()
                     break
