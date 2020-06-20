@@ -373,7 +373,27 @@ class Server:
         #       >else send "you are not admin of this group"
         #   Other
         #
-        pass
+        # msg = ['Member's_ID', 'Group_ID']
+        print("got a remove from group request ...")
+        print(msg)
+        MyId = self.GetID(sock)     # requester's ID
+        print('checking admin ...')
+        if self.Admins[msg[1]] == MyId:   # checking Admin
+            print("admin conformed ...")
+            if MyId != msg[0]:      # if member is not admin
+                if msg[0] in self.Groups[msg[1]]:  # checking Member
+                    print("removing from group ...")
+                    self.Groups[msg[1]].remove(msg[0])  # removing member
+                    print("removed from group ...")
+                    print("sending reply to client ...")
+                    rep = "res<rfg<True<Removed " + msg[0] + " from group " + msg[1]
+                    sock.sendall(rep.encode('UTF-8'))
+            else:
+                rep = "res<rfg<False<You are the admin plz change admin and Try again"
+                sock.sendall(rep.encode('UTF-8'))
+        else:
+            rep = "res<rfg<False<You are not the admin or Member deos't exist"
+            sock.sendall(rep.encode('UTF-8'))
 
     def AddToGroup(self,  msg, sock):
         #   What it will do?
