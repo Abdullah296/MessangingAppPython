@@ -283,7 +283,7 @@ class Client:
        LeftFrame = Frame(TopFrame)
        
        Label(LeftFrame, text = "    Options: ",  height=1, width=15).pack(side=TOP)
-       Option = ["MyProfile","Add Contacts","GroupMembers","Signout"]
+       Option = ["MyProfile","Add Contacts","My Contacts","Create Group","Change admin","GroupMembers","Signout"]
        variable1 = StringVar(root2)
        variable1.set(Option[0])
        opt1 = OptionMenu(LeftFrame, variable1, *Option)
@@ -374,10 +374,18 @@ class Client:
            Display2.insert('end', '\n You: '+tkmessage.get())
            Display2.configure(state='disabled')
            
+       #global a
+       #a = 0
+       def callback(sv):
+          # if a == 0:
+               Display2.configure(state='normal')
+               Display2.insert('end', '\n'+self.MyName+' is Typing ')
+               Display2.configure(state='disabled')
+           #    a = a + 1
        
        BottomFrame = Frame(RightFrame)
        tkmessage = StringVar(root2)
-       
+       tkmessage.trace("w", lambda name, index, mode, tkmessage=tkmessage: callback(tkmessage))
        tkkkkk = Entry(BottomFrame, textvariable=tkmessage, width=40,  ).pack(side=LEFT, padx=(5, 13), pady=(5, 10),  )
        btnConnect = Button(BottomFrame, text = "Send", height=1, width=5, command=sendmsg).pack(side=RIGHT)
        BottomFrame.pack(side=TOP)
