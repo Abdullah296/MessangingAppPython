@@ -405,7 +405,27 @@ class Server:
         #       > else send response 'you are not admin of this group'
         #   Other
         #
-        pass
+        # msg = [New_Member's_ID, Group_ID]
+        print("got an add member request ...")
+        if msg[1] in self.Groups.keys():    # if group exist
+            print("group exist ...")
+            MyId = self.GetID(sock)     # requester's ID
+            print("checking admin ...")
+            if MyId == self.Admins[msg[1]]:     # if requester is admin
+                if msg[0] not in self.Groups[msg[1]]:   # if member not exist before
+                    print("adding member to list ...")
+                    self.Groups[msg[1]].append(msg[0])
+                    rep = "res<atg<True< Member " + msg[0] + " added to the group " + msg[1]
+                    sock.sendall(rep.encode('UTF-8'))
+                else:
+                    rep = "res<atg<False< Member " + msg[0] + " already exist in group " + msg[1]
+                    sock.sendall(rep.encode('UTF-8'))
+            else:
+                rep = "res<atg<False<You are not he admin of the group " + msg[1]
+                sock.sendall(rep.encode('UTF-8'))
+        else:
+            rep = "res<atg<False<Group not exist"
+            sock.sendall(rep.encode('UTF-8'))
 
     def Decoder(self, msg, sock):
         #   What it will do?
