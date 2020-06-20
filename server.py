@@ -21,11 +21,22 @@ class Server:
     ClientsSockets = {}    # Each Clients ID and Socket(if available)
     # Clients = {Clients_ID:Client_Socket}
     CurrentClientStatus = {}    # Each Client's ID with its Sign In status
-    # CurrentClientStatus = {ClientID:'True/False'}
+    # CurrentClientStatus = {ClientID:'online/ofline'}
     ClientPass = {}     # Each Client's ID with its Password
     # ClientPass = {Client_ID:Password}
-    Buffer = {}     # to store un sended data with id
+    Buffer = {}     # to store un sended messages with id
     # Buffer = {ID:[Messages]}
+    Requests = {}   # store Group joining requests of Each client with there responce
+    # Requests = { 'Client_ID':{ 'Group_ID': 'Responce'}
+    #               }
+    # Responce types:
+    #           yes : agree to join group
+    #           not : not agree to join group
+    #           pen : pending responce
+    # by default server will use 'pen' or pending responce
+    PendingRequests = {}    # it will store un-sended requests
+    # PendingRequests = { 'Client_ID':{ 'Group_ID': 'Responce'}
+    #                       }
 
     def GetID(self, sock):
         #   What it will do?
@@ -290,7 +301,7 @@ class Server:
         #
         print("request for create a new group ...")
         print("Generating Random key ...")
-        temp = random.randint(0, 10000)
+        temp = random.randint(0, self.MaxClient)
         temp = str(temp)
         temp = "g" + temp
         # msg = ['Group Name','group members']
@@ -301,16 +312,51 @@ class Server:
             self.GroupNames[temp] = str(msg[0])
             print("updated ...")
             print(self.GroupNames)
+            # building request
+            req = "req<gjr<" + temp + "<" + msg[0]
+            print(req)
+            #######################################
+            # Formate:
+            # self.Requests = { 'client ID':{'Group ID':'Responce'},
+            #                       }
+            # Responce types:
+            #           yes : agree to join group
+            #           not : not agree to join group
+            #           pen : pending responce
+            # by default server will use 'pen' or pending responce
+            ######################################
+            # adding each member to self.Requests with group ID
+            print("Updating self.Requests")
             for EachId in str(msg[1]).split(":")[:-2]:
-                print("adding members to groups ...")
-                self.Groups[temp].append(str(EachId))
+                print("adding members ...")
+                if EachId in self.Requests.keys():
+                    self.Requests[EachId][temp] = 'pen'
+                else:
+                    self.Requests[EachId] = {temp: 'pen'}
+            print(self.Requests)
+            #####################################
+            # sending request to Each Member
+            print("sending request to group members")
+            for EachId in str(msg[1]).split(":")[:-2]:
+                if EachId in self.CurrentClientStatus.keys():      # client with EachID exist
+                    if self.CurrentClientStatus[EachId] == 'online':  # client is online
+                        self.ClientsSockets[EachId].sendall(req.encode('UTF-8'))   # sending request
+                        print(f"sening request to {EachId}")
+                    else:
+                        if EachId in self.PendingRequests.keys():
+                            self.PendingRequests[EachId][temp] = 'pen'
+                        else:
+                            self.PendingRequests[EachId] = {temp: 'pen'}
+            #####################################
+            # adding admin to group member list
             id = self.GetID(sock)   # finding id of the requester
             print("adding members to groups ...")
-            self.Groups[temp].append(str(id))
+            self.Groups[temp] = [str(id)]
             print("Added Successfully ...")
             print(self.Groups)
+            #####################################
+            # adding admin to group member list
             print("Adding Group Admin ...")
-            id = self.GetID(sock)
             self.Admins[str(temp)] = str(id)
             print(self.Admins)
             print("updated ...")
@@ -427,6 +473,24 @@ class Server:
             rep = "res<atg<False<Group not exist"
             sock.sendall(rep.encode('UTF-8'))
 
+    def GJRespHandler(self, resp, sock):
+        # Group Joining Responce Handler
+        print("got a responce on GJR ...")
+        MyId = self.GetID(sock)
+        if MyId in self.Requests.keys():    # checking weather requester exist
+            if resp[0] in self.Requests[MyId].keys():   # checking weather this request exist
+                if resp[1] == 'yes':
+                    print("ading member to group ...")
+                    self.Groups[resp[0]].append(MyId)  # adding member to list
+                    print(self.Groups)
+                    del self.Requests[MyId][resp[0]]  # deleting that request
+                    rep = f"res<gjr<{resp[0]}<{self.GroupNames[resp[0]]}<True"
+                    sock.sendall(rep.encode('UTF-8'))
+                elif resp[1] == 'no':
+                    del self.Requests[MyId][resp[0]]  # deleting that request
+                    rep = f"res<gjr<{resp[0]}<{self.GroupNames[resp[0]]}<False"
+                    sock.sendall(rep.encode('UTF-8'))
+
     def Decoder(self, msg, sock):
         #   What it will do?
         #       it decode the request and call a specific function to handel that request
@@ -469,6 +533,8 @@ class Server:
                 self.ChangeAdmin(msg[2:], sock)
         if msg[0] == 'm':
             self.SendMessage(msg[2], msg[1], sock)
+        if msg[0] == 'res':
+            self.GJRespHandler(msg[2:], sock)
 
 
     def Handler(self, sock, adr):
