@@ -142,7 +142,6 @@ class Server:
             print("checking bufffer ...")
             pass
 
-
     def SendMessage(self, msg, id, sock):
         #   What it will do?
         #       it will send message to a client
@@ -473,6 +472,19 @@ class Server:
             rep = "res<atg<False<Group not exist"
             sock.sendall(rep.encode('UTF-8'))
 
+    def LeaveGroup(self, msg, sock):
+        print("leve group request ...")
+        MyID = self.GetID(sock)
+        if MyID in self.Groups[msg]:
+            self.Groups[msg].remove(MyID)
+            print("group left ...")
+            res = f"res<lg<True<{msg}"
+            sock.sendall(res.encode('UTF-8'))
+        else:
+            print("can not left group ...")
+            res = f"res<lg<False<{msg}"
+            sock.sendall(res.encode('UTF-8'))
+
     def GJRespHandler(self, resp, sock):
         # Group Joining Responce Handler
         print("got a responce on GJR ...")
@@ -522,6 +534,8 @@ class Server:
                     self.Info(msg[2:], sock)
                 except IndexError as err:
                     print("error in index ", err)
+            if msg[1] == 'lg':
+                self.LeaveGroup(msg[2], sock)
         if msg[0] == 'c':
             if msg[1] == 'cg':   # create group
                 self.CreateGroup(msg[2:], sock)
