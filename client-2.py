@@ -37,6 +37,9 @@ class Client:
     #       Information Request (for current status online/offline)
     #           request format: r<info<ClientID<ClientID ... or r<info<GroupID
     #           response format: res<info<ID:Status<ID:Status ...
+    #       Leave Group Request:
+    #           request formate: r<lg<Group_ID
+    #           responce formate: res<lg<True/False<Group_ID
     # In Command Type
     #       Create Group
     #           request format:c<cg<GroupName<ID:ID:ID
@@ -389,6 +392,18 @@ class Client:
             print("socket closing error :",err)
             sys.exit("Socket closing error")
 
+    def LeaveGroup(self):
+        if self.MyStatus:
+            print(self.MyGroups)
+            gId = input("Enter Group ID: ")
+            if gId in self.MyGroups.keys():
+                req = f"r<lg<{gId}"
+                self.Socket.sendall(req.encode('UTF-8'))
+            else:
+                print("Enter correct Group ID")
+        else:
+            print("Please sign in")
+
     def ViewMesssages(self):
         if len(self.Notifications['Messages']) == 0:
             print("No Message")
@@ -491,6 +506,11 @@ class Client:
                         print("added to the group")
                     elif msg[4] == 'False':
                         print("can not be added to the group")
+                if msg[1] == 'lg':
+                    if msg[2] == 'True':
+                        print(f"You left Group{msg[3]}")
+                    elif msg[2] == 'False':
+                        print(f"You can't left Group{msg[3]}")
             elif msg[0] == 'm':     # a message
                 if msg[1][0] == 'g':        # a group ID
                     if msg[2] in self.MyContacts.keys():
@@ -581,7 +601,8 @@ class Client:
                 print("a. View Group Members")
                 print("b. View Messages")
                 print("c. View Requests")
-                print("d. Exit")
+                print("d. Leave Group")
+                print("e. Exit")
                 temp = input(">>>")
                 if temp is '1':
                     self.CreateGroup()
@@ -608,6 +629,8 @@ class Client:
                 elif temp is 'c':
                     self.ViewRequests()
                 elif temp is 'd':
+                    self.LeaveGroup()
+                elif temp is 'e':
                     #self.SaveData()
                     self.Socket.close()
                     break
