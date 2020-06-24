@@ -136,16 +136,6 @@ class Client:
                 for id, name in self.MyContacts.items():
                     msg = msg + "<" + str(id)
                 self.Socket.sendall(msg.encode('UTF-8'))
-                '''info = self.Socket.recv(1024).decode('UTF-8')
-                info = info.split("<")
-                for EachInfo in info[:-1]:
-                    EachInfo = EachInfo.split(":")
-                    if EachInfo[0] in self.MyContacts.keys():
-                        print(f"Name :{self.MyContacts[EachInfo[0]]}", f"ID :{EachInfo[0]}", f"status :{EachInfo[1]}",
-                              sep='     ')
-                    else:
-                        print(f"Name :Not Saved", f"ID :{EachInfo[0]}", f"status :{EachInfo[1]}", sep='     ')'''
-
         else:
             print("Please Sign in")
 
@@ -168,20 +158,6 @@ class Client:
             # yield gID
             msg = msg + gID
             self.Socket.sendall(msg.encode('UTF-8'))
-            '''info = self.Socket.recv(1024).decode('UTF-8')
-            info = info.split("<")
-            if info[0][0] == 'S':
-                print(info)
-            else:
-                for EachInfo in info[:-1]:
-                    EachInfo = EachInfo.split(":")
-                    if EachInfo[0] in self.MyContacts.keys():
-                        print(f"Name :{self.MyContacts[EachInfo[0]]}", f"ID :{EachInfo[0]}", f"status :{EachInfo[1]}",
-                              sep='     ')
-                    elif EachInfo[0] == self.MyId:
-                        print(f"You ", f"ID :{EachInfo[0]}", f"status :{EachInfo[1]}", sep='     ')
-                    else:
-                        print(f"Name :Not Saved", f"ID :{EachInfo[0]}", f"status :{EachInfo[1]}", sep='     ')'''
             return str(gID)
         else:
             print("Please Sign in")
