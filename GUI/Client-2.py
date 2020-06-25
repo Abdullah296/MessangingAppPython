@@ -429,7 +429,7 @@ class Client:
        
        
        def sendmsg(*args):
-           
+           a = 0
            Display2.configure(state='normal')
            Display2.insert('end', '\n You: '+tkmessage.get())
            Display2.configure(state='disabled')
@@ -438,13 +438,18 @@ class Client:
        
        def callback(sv):
                
-               s = self.MyName+' is Typing '
+               s = ' is Typing '
                #Display2.configure(state='normal')
                #Display2.insert('end', '\n'+self.MyName+' is Typing ')
                #Display2.configure(state='disabled')
                self.Chat(s, variableee.get())
                
-       
+       '''def Chattt(s, client):
+           global a
+           if a == 0:
+               self.Chat(s, client)
+               a= a+1'''
+               
        BottomFrame = Frame(RightFrame)
        
        tkmessage = StringVar(root2)
@@ -879,14 +884,34 @@ class Client:
                 else:       # a user ID
                     if msg[1] in self.MyContacts.keys():
                         tmsg = f"{self.MyContacts[msg[1]]} --> {msg[2]}"
-                        Display2.configure(state='normal')
-                        Display2.insert('end', '\n'+self.MyContacts[msg[1]]+'--> '+msg[2])
-                        Display2.configure(state='disabled')
+                        if (msg[2] !=  ' is Typing ')  and (msg[2] !=  'Message Read'):
+                                Display2.configure(state='normal')
+                                Display2.insert('end', '\n'+self.MyContacts[msg[1]]+'--> '+msg[2])
+                                Display2.configure(state='disabled')
+                        else:
+                            Display2.configure(state='normal')
+                            Display2.insert('end', '\n'+self.MyContacts[msg[1]]+': '+msg[2])
+                            Display2.configure(state='disabled')
+                            
+                        
+                        if msg[2] !=  ' is Typing ':
+                            if msg[2] !=  'Message Read':
+                                self.Chat('Message Read', msg[1] )
                     else:
                         tmsg = f"From {msg[1]} --> {msg[2]}"
-                        Display2.configure(state='normal')
-                        Display2.insert('end', '\n'+msg[1]+'--> '+msg[2])
-                        Display2.configure(state='disabled')
+                        if (msg[2] !=  ' is Typing ')  and (msg[2] !=  'Message Read'):
+                            
+                                Display2.configure(state='normal')
+                                Display2.insert('end', '\n'+msg[1]+'--> '+msg[2])
+                                Display2.configure(state='disabled')
+                        else:
+                            Display2.configure(state='normal')
+                            Display2.insert('end', '\n'+msg[1]+'::  '+msg[2])
+                            Display2.configure(state='disabled')
+                                
+                        if msg[2] !=  ' is Typing ':
+                            if msg[2] !=  'Message Read':
+                                self.Chat('Message Read', msg[1] )
                         
                 self.NotificationHandler()
             elif msg[0] == 'req':   # request from server

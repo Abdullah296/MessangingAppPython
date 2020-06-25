@@ -532,11 +532,30 @@ class Server:
             if msg[1] == 'ca': # change admin
                 self.ChangeAdmin(msg[2:], sock)
         if msg[0] == 'm':
-            self.SendMessage(msg[2], msg[1], sock)
+            if msg[2] == 'file':
+                self.recievefile(sock)
+            else:
+                self.SendMessage(msg[2], msg[1], sock)
         if msg[0] == 'res':
             self.GJRespHandler(msg[2:], sock)
 
-
+    def recievefile(self,sock):
+        print('Recieving file')
+        BUFFER_SIZE = 4096
+        received = sock.recv(BUFFER_SIZE).decode()
+        filename, filesize = received.split()
+        filename = os.path.basename(filename)
+        filesize = int(filesize)
+        progress = tqdm.tqdm(range(filesize), f"Receiving {filename}", unit="B", unit_scale=True, unit_divisor=1024)
+        print('hello')
+        with open(filename, "wb") as f:
+            for _ in progress:
+                bytes_read = sock.recv(BUFFER_SIZE)
+                if not bytes_read:    
+                    break
+                f.write(bytes_read)
+                progress.update(len(bytes_read))
+                
     def Handler(self, sock, adr):
         #   What it will do?
         #       it will handle incoming connection requets and update sockets of clients

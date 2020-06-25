@@ -2,6 +2,8 @@ import socket   # for creating sockets
 import sys      # for handling exceptions
 import json     # for saving data
 import threading
+import os
+import tqdm
 
 class Client:
     MyName = None     # My user name
@@ -361,21 +363,68 @@ class Client:
         if t == '1':
             print(self.MyGroups)
             OtherClient = input("Enter Group ID :")
-            msg = input(">>>")
-            while msg!='\end':
-                msg = "m<" + OtherClient + "<" + msg
-                self.Socket.sendall(msg.encode('UTF-8'))
+            print("1. Send message")
+            print("2. Send File")
+            iuy = input('>>>')
+            if iuy == '1':
+                print('Enter \end to  End conversation')
                 msg = input(">>>")
+                while msg!='\end':
+                    msg = "m<" + OtherClient + "<" + msg
+                    self.Socket.sendall(msg.encode('UTF-8'))
+                    msg = input(">>>")
+            elif iuy == '2':
+                msg = 'file'
+                msg = "m<" + OtherClient + "<" + msg
+                self.Sendfile()
                 
         if t == '2':
             print(self.MyContacts)
             OtherClient = input("Enter Client's ID :")
+            print("1. Send message")
+            print("2. Send File")
+            iuy = input('>>>')
+            if iuy == '1':
+                print('Enter \end to  End conversation')
+                msg = input(">>>")
+                while msg!='\end':
+                    msg = "m<" + OtherClient + "<" + msg
+                    self.Socket.sendall(msg.encode('UTF-8'))
+                    msg = input(">>>")
+            elif iuy == '2':
+                msg = 'file'
+                msg = "m<" + OtherClient + "<" + msg
+                self.Sendfile()
+                '''
             msg = input(">>>")
             while msg != '\end':
                 msg = "m<" + OtherClient + "<" + msg
                 self.Socket.sendall(msg.encode('UTF-8'))
-                msg = input(">>>")
-
+                msg = input(">>>")'''
+                
+    def Sendfile(self):
+        #filename = filedialog.askopenfilename(initialdir = "/",title = "Select file",filetypes = (("text file","*.txt"),("all files","*.*")))
+        filename = input('Enter file location:  ')
+        BUFFER_SIZE = 4096 # send 4096 bytes each time step
+        
+        #filename = "D:\hello.txt"
+        filesize = os.path.getsize(filename)
+        #s = socket.socket()
+        #print(f"[+] Connecting to {host}:{port}")
+        #s.connect((host, port))
+        #print("[+] Connected.")
+    
+        self.Socket.send(f"{filename} {filesize}".encode())
+    
+        progress = tqdm.tqdm(range(filesize), f"Sending {filename}", unit="B", unit_scale=True, unit_divisor=1024)
+        with open(filename, "rb") as f:
+            for _ in progress:
+                bytes_read = f.read(BUFFER_SIZE)
+                if not bytes_read:
+                    break
+                self.Socket.sendall(bytes_read)
+                progress.update(len(bytes_read))
+            
     def close(self):
         #       What it will do?
         #           it will close the socket
