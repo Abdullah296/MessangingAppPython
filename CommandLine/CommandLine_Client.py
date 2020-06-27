@@ -248,7 +248,10 @@ class Client:
         while a != 'end':
             a = input("Enter User Id to Add in this Group:")
             rep = rep + a + ":"
+            print(rep)
+        
         self.Socket.sendall(rep.encode('UTF-8'))
+        #print(rep)
 
     def ChangeAdmin(self):
         #       What it will do?
@@ -497,7 +500,7 @@ class Client:
     def Receive(self):
         while True:
             msgS = self.Socket.recv(1024).decode('UTF-8')
-            print(msgS)
+            #print(msgS)
             msg = msgS.split("<")
             print(msg) # for debug purpose
             if msg[0] == 'res':     # it's a response from a server

@@ -357,7 +357,7 @@ class Client:
            
            
            elif variable1.get() == "Signout":
-               self.Socket.close()
+               
                self.Signout()
                
            
@@ -569,7 +569,11 @@ class Client:
         
     def Signout(self):
         root2.destroy()
-        self.Decoder()
+        
+        MyStatus = False
+        
+        
+        #self.signin()
         
 ####################################################################################################################
     def CreateGroupGui(self):
@@ -643,7 +647,9 @@ class Client:
         if idd3 != '':
             print('hello 32')
             rep = rep + idd3 + ":"
+        rep = rep +"end:"
         self.Socket.sendall(rep.encode('UTF-8'))
+        print(rep)
 
     def ChangeAdmin(self):
         #       What it will do?
@@ -759,13 +765,17 @@ class Client:
             self.Notifications['Messages'] = []
 
     def ViewRequests(self):
+        
+        print('you are good abdullah')
         if len(self.Notifications['Requests']) == 0:
             print("\nNo Request")
         else:
             i = 0
             
             request = []
+            global hello
             for EachRequest, resp in self.Notifications['Requests'].items():
+                hello = EachRequest[2]
                 request.append(EachRequest)
                 EachRequest = EachRequest.split("<")
                 tstr = f"{i}. Group ID: {EachRequest[2]} Group Name: {EachRequest[3]} Present Response: {resp}"
@@ -775,17 +785,17 @@ class Client:
             print(request)
             print("\n1. Change Response")
             print("2. Exit")
-            op = input(">>>")
+            op = '1'
             if op == '1':
                 rno = input("Enter Request No: ")
                 print("Enter 'yes' (for joining)")
                 print("Enter 'no' (for rejecting)")
                 print("Enter 'pending' (for later)")
-                resp = input(">>> ")
+                resp = 'yes'
                 if resp != 'pending':
                     ############################
                     # building responce for sending to server
-                    gID = input("Enter Group ID: ")
+                    gID = hell0
                     resp = "res<gjr<" + gID + "<" + resp
                     lll = request[0]
                     del self.Notifications['Requests'][lll]
@@ -913,12 +923,18 @@ class Client:
                             if msg[2] !=  'Message Read':
                                 self.Chat('Message Read', msg[1] )
                         
-                self.NotificationHandler()
+                #self.NotificationHandler()
             elif msg[0] == 'req':   # request from server
                 if msg[1] == 'gjr':     # a group joining request
-                    self.Notifications['Requests'][msgS] = 'pen'
-                    print(self.Notifications)
-                self.NotificationHandler()
+                    print('got a request')
+                    self.Notifications['Requests'][msgS] = 'yes'
+                    #self.ViewRequests(self)
+                    gID = msg[2]
+                    g_Name = msg[3]
+                    self.MyGroups[gID] = g_Name
+                    resp = f"res<gjr<{gID}<yes"
+                    self.Socket.sendall(resp.encode('UTF-8'))
+
 
     def ConnectToServer(self):
         #       What it will do?
