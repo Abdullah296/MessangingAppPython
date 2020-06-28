@@ -4,6 +4,7 @@ import json     # for saving data
 import threading
 
 class Client:
+    toDebug = False
     MyName = None     # My user name
     MyId = None   # My unique Id stored in server
     MyGroups = {}   # Groups which I have joined
@@ -72,6 +73,10 @@ class Client:
     # by default server will use 'pen' or pending responce
     ###############################################################################
     ###############################################################################
+
+    def DebugMessage(self, message):
+        if self.toDebug:
+            print(message)
 
     def SaveData(self):
         #       What it will do?
