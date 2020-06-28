@@ -10,6 +10,7 @@ import tqdm
 import os
 
 class Server:
+    toDebug = False
     MaxClient = 10   # total clients to be handled at a time
     # OnlineClients = {}  # available clients
     Groups = {}     # Groups members with there IDs
@@ -37,6 +38,10 @@ class Server:
     PendingRequests = {}    # it will store un-sended requests
     # PendingRequests = { 'Client_ID':{ 'Group_ID': 'Responce'}
     #                       }
+
+    def DebugMessage(self, message):
+        if self.toDebug:
+            print(message)
 
     def GetID(self, sock):
         #   What it will do?
