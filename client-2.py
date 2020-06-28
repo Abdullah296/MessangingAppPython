@@ -108,16 +108,16 @@ class Client:
                 File = open("MyContacts.json")
                 self.MyContacts = json.load(File)
             except FileNotFoundError as err:
-                print("No Saved Data found")
+                self.DebugMessage("No Saved Data found")
             else:
-                print("Data Loaded successfully")
+                self.DebugMessage("Data Loaded successfully")
             try:
                 File = open("MyGroups.json")
                 self.MyGroups = json.load(File)
             except FileNotFoundError as err:
-                print("No Saved Data found")
+                self.DebugMessage("No Saved Data found")
             else:
-                print("Data Loaded successfully")
+                self.DebugMessage("Data Loaded successfully")
 
         else:
             print("Please Sign in")
@@ -266,7 +266,6 @@ class Client:
         gID = self.GroupMembers()
         cID = input("Select Group Member: ")
         req = "c<rfg<" + cID + "<" + gID
-        print(req)
         self.Socket.sendall(req.encode('UTF-8'))
 
     def AddToGroup(self):
@@ -346,7 +345,7 @@ class Client:
             print(self.MyGroups)
             OtherClient = input("Enter Group ID :")
             msg = input(">>>")
-            while msg!='\end':
+            while msg!='end':
                 msg = "m<" + OtherClient + "<" + msg
                 self.Socket.sendall(msg.encode('UTF-8'))
                 msg = input(">>>")
@@ -410,7 +409,6 @@ class Client:
             print("2. Exist")
             op = input(">>>")
             if op == '1':
-                rno = input("Enter Request No: ")
                 print("Enter 'yes' (for joining)")
                 print("Enter 'no' (for rejecting)")
                 print("Enter 'pen' (for latter)")
@@ -495,10 +493,10 @@ class Client:
             elif msg[0] == 'm':     # a message
                 if msg[1][0] == 'g':        # a group ID
                     if msg[2] in self.MyContacts.keys():
-                        tmsg = f"In Group --> {self.MyGroups[msg[1]]}<->{self.MyContacts[msg[2]]} --> {msg[3]}"
+                        tmsg = f"In Group --> {self.MyGroups[msg[1]]} <-> {self.MyContacts[msg[2]]} --> {msg[3]}"
                         self.Notifications['Messages'].append(tmsg)
                     else:
-                        tmsg = f"In Group --> {self.MyGroups[msg[1]]}<->{msg[2]} --> {msg[3]}"
+                        tmsg = f"In Group --> {self.MyGroups[msg[1]]} <-> {msg[2]} --> {msg[3]}"
                         self.Notifications['Messages'].append(tmsg)
                 else:       # a user ID
                     if msg[1] in self.MyContacts.keys():
@@ -523,21 +521,17 @@ class Client:
         #       Other
         try:
             # self.MyName = input("Enter user name :")
-            print("Creating Socket")
+            self.DebugMessage("Creating Socket")
             self.Socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        except socket.error as err:
-            print("Socket creating error :", err)
+        except socket.error:
             sys.exit("Socket creating error ")
         ServerIP = 'localhost'
         ServerPort = 8080
         ServerAdress = (ServerIP, ServerPort)
         try:
-            print("connecting to server :", ServerAdress)
+            self.DebugMessage(f"connecting to server : {ServerAdress}")
             self.Socket.connect(ServerAdress)
-            '''RThread = threading.Thread(target=self.Receive)
-            RThread.start()'''
-        except socket.error as err:
-            print("error in connecting to server :", err)
+        except socket.error:
             sys.exit("error in connecting to server :")
         else:
             print("connected to the server")
@@ -567,8 +561,6 @@ class Client:
                     self.SignUp()
                 elif temp is '2':
                     self.SignIn()
-                    #print("loading data")
-                    #self.LoadData()
             else:
                 print("1. Create New Group")
                 print("2. Change Group Admin")
@@ -627,9 +619,7 @@ class Client:
         try:
             self.Decoder()
         except KeyboardInterrupt:
-            print("saving data ")
-            #self.SaveData()
-            print("Saved data")
+            self.DebugMessage("Saving data ")
 
 
 if __name__ == '__main__':
