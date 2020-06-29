@@ -5,6 +5,7 @@ import threading
 
 class Client:
     toDebug = False
+    SaveFiles = False
     MyName = None     # My user name
     MyId = None   # My unique Id stored in server
     MyGroups = {}   # Groups which I have joined
@@ -73,6 +74,16 @@ class Client:
     # by default server will use 'pen' or pending responce
     ###############################################################################
     ###############################################################################
+
+    def MyInput(self, message):
+        while True:
+            variable = input(message)
+            if len(variable) == 0:
+                print("Enter a valid input")
+            else:
+                break
+        return variable
+
 
     def DebugMessage(self, message):
         if self.toDebug:
@@ -175,8 +186,8 @@ class Client:
         #           > build request foramte (r<up<password)
         #           > take response from server (unique_ID)
         #       Other
-        self.MyName = input("Enter your User Name :")
-        temp = input("Enter Your Password :")
+        self.MyName = self.MyInput("Enter your User Name :")
+        temp = self.MyInput("Enter Your Password :")
         temp = "r<up<" + temp
         self.Socket.sendall(temp.encode('UTF-8'))
         msg = self.Socket.recv(1024).decode('UTF-8')
@@ -200,8 +211,8 @@ class Client:
         if self.MyName is None:
             self.MyName = input("Enter User Name :")
         if self.MyId is None:
-            self.MyId = input("Enter Your ID :")
-        temp = input("Enter Your Password :")
+            self.MyId = self.MyInput("Enter Your ID :")
+        temp = self.MyInput("Enter Your Password :")
         temp = "r<in<"+str(self.MyId)+"<"+str(temp)
         self.Socket.sendall(temp.encode('UTF-8'))
         msg = self.Socket.recv(1024).decode('UTF-8')
@@ -223,12 +234,12 @@ class Client:
         #           > build the request formate (c<cg<member's_ID<member's_ID ...)
         #           > take response from the server ('create ' or 'not created')
         #       Other
-        tname = input("Enter Group Name :")
+        tname = self.MyInput("Enter Group Name :")
         rep = "c<cg<"+tname + "<"
         a = None
         print("Enter 'end' to exit")
         while a != 'end':
-            a = input("Enter User Id to Add in this Group:")
+            a = self.MyInput("Enter User Id to Add in this Group:")
             rep = rep + a + ":"
         self.Socket.sendall(rep.encode('UTF-8'))
 
@@ -264,7 +275,7 @@ class Client:
         #           > take response from the server ('Admin changed'/'You are not the admin of this group')
         #       Other
         gID = self.GroupMembers()
-        cID = input("Select Group Member: ")
+        cID = self.MyInput("Select Group Member: ")
         req = "c<rfg<" + cID + "<" + gID
         self.Socket.sendall(req.encode('UTF-8'))
 
@@ -280,9 +291,9 @@ class Client:
         #       Other
         req = "c<atg<"
         print(self.MyGroups)
-        gID = input("Enter group ID: ")
+        gID = self.MyInput("Enter group ID: ")
         print(self.MyContacts)
-        cID = input("Enter new member ID: ")
+        cID = self.MyInput("Enter new member ID: ")
         req = req + cID + "<" + gID
         self.Socket.sendall(req.encode('UTF-8'))
 
@@ -305,8 +316,8 @@ class Client:
         #           (it does not make any request to server)
         #       Other
         if self.MyStatus is True:
-            tid = input("Enter ID :")
-            tname = input("Enter Name :")
+            tid = self.MyInput("Enter ID: ")
+            tname = self.MyInput("Enter Name :")
             if tid not in self.MyContacts.keys():
                 self.MyContacts[str(tid)] = tname
                 print("Added successfully")
@@ -340,24 +351,24 @@ class Client:
         print("1. In group")
         print("2. with client")
         print("3. Exit")
-        t = input(">>>")
+        t = self.MyInput(">>>")
         if t == '1':
             print(self.MyGroups)
-            OtherClient = input("Enter Group ID :")
-            msg = input(">>>")
+            OtherClient = self.MyInput("Enter Group ID :")
+            msg = self.MyInput(">>>")
             while msg!='end':
                 msg = "m<" + OtherClient + "<" + msg
                 self.Socket.sendall(msg.encode('UTF-8'))
-                msg = input(">>>")
+                msg = self.MyInput(">>>")
                 
         if t == '2':
             print(self.MyContacts)
-            OtherClient = input("Enter Client's ID :")
-            msg = input(">>>")
-            while msg != '\end':
+            OtherClient = self.MyInput("Enter Client's ID :")
+            msg = self.MyInput(">>>")
+            while msg != 'end':
                 msg = "m<" + OtherClient + "<" + msg
                 self.Socket.sendall(msg.encode('UTF-8'))
-                msg = input(">>>")
+                msg = self.MyInput(">>>")
 
     def close(self):
         #       What it will do?
@@ -375,7 +386,7 @@ class Client:
     def LeaveGroup(self):
         if self.MyStatus:
             print(self.MyGroups)
-            gId = input("Enter Group ID: ")
+            gId = self.MyInput("Enter Group ID: ")
             if gId in self.MyGroups.keys():
                 req = f"r<lg<{gId}"
                 self.Socket.sendall(req.encode('UTF-8'))
@@ -407,12 +418,12 @@ class Client:
 
             print("1. Change Responce")
             print("2. Exist")
-            op = input(">>>")
+            op = self.MyInput(">>>")
             if op == '1':
                 print("Enter 'yes' (for joining)")
                 print("Enter 'no' (for rejecting)")
                 print("Enter 'pen' (for latter)")
-                resp = input(">>> ")
+                resp = self.MyInput(">>>")
                 if resp != 'pen':
                     ############################
                     # building responce for sending to server
@@ -420,6 +431,10 @@ class Client:
                     resp = "res<gjr<" + gID + "<" + resp
                     self.Socket.sendall(resp.encode('UTF-8'))
                     #del self.Notifications['Requests'][]
+            elif op == '2':
+                pass
+            else:
+                print("Select a Valid Option")
 
 
     def NotificationHandler(self):
@@ -548,7 +563,7 @@ class Client:
             if self.Socket is None:     # not connected to server
                 print("1. Go Online")
                 print("2. Exit")
-                temp = input(">>>")
+                temp = self.MyInput(">>>")
                 if temp is '1':
                     self.ConnectToServer()
                 elif temp is '2':
@@ -556,7 +571,7 @@ class Client:
             elif self.MyStatus is False:     # I have't Sign in
                 print("1. Sign UP")
                 print("2. Sign In")
-                temp = input(">>>")
+                temp = self.MyInput(">>>")
                 if temp is '1':
                     self.SignUp()
                 elif temp is '2':
@@ -576,7 +591,7 @@ class Client:
                 print("c. View Requests")
                 print("d. Leave Group")
                 print("e. Exit")
-                temp = input(">>>")
+                temp = self.MyInput(">>>")
                 if temp is '1':
                     self.CreateGroup()
                 elif temp is '2':
