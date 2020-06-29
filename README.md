@@ -18,6 +18,8 @@ First clone The repository and open in Python IDE
 Note: You can use line 588&589 in CommandLine_Client.py and line 954 & 955 In GUI_CLIENT.py to change IP address and port number
 
 2. Then Run the Client 
+
+
    2.1 You can Run Clientfile by going in that directory then write Command on CMD "Python filename " (File name : CommandLine_Client.py, GUI_CLIENT.py )CommandLine_Client.py.
 
    2.2 You can also Run the file from Python Ide.
