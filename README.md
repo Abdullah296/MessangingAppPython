@@ -15,7 +15,7 @@ First clone The repository and open in Python IDE
     
     
     
-Note: You can use line 588&589 in CommandLine_Client.py and line 994 & 995 In GUI_CLIENT.py to change IP address and port number
+Note: You can use last line  of CommandLine_Client.py and  GUI_CLIENT.py to change IP address and port number
 
 2. Then Run the Client 
 
