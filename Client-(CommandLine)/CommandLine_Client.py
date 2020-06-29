@@ -443,32 +443,65 @@ class Client:
             print("\nNo Request")
         else:
             i = 0
-            print(self.Notifications['Requests'])
+
+            request = []
             for EachRequest, resp in self.Notifications['Requests'].items():
+                request.append(EachRequest)
                 EachRequest = EachRequest.split("<")
-                tstr = f"{i}. Group ID: {EachRequest[2]} Group Name: {EachRequest[3]} Present Responce: {resp}"
+                tstr = f"{i}. Group ID: {EachRequest[2]} Group Name: {EachRequest[3]} Present Response: {resp}"
                 print(tstr)
                 i = i + 1
 
-            print("1. Change Responce")
-            print("2. Exist")
-            op = self.MyInput(">>>")
+            print(request)
+            print("\n1. Change Response")
+            print("2. Exit")
+            op = input(">>>")
             if op == '1':
+                rno = input("Enter Request No: ")
                 print("Enter 'yes' (for joining)")
                 print("Enter 'no' (for rejecting)")
-                print("Enter 'pen' (for latter)")
-                resp = self.MyInput(">>>")
-                if resp != 'pen':
+                print("Enter 'pending' (for later)")
+                resp = input(">>> ")
+                if resp != 'pending':
                     ############################
                     # building responce for sending to server
                     gID = input("Enter Group ID: ")
                     resp = "res<gjr<" + gID + "<" + resp
+                    lll = request[0]
+                    del self.Notifications['Requests'][lll]
                     self.Socket.sendall(resp.encode('UTF-8'))
-                    #del self.Notifications['Requests'][]
-            elif op == '2':
-                pass
-            else:
-                print("Select a Valid Option")
+
+    # def ViewRequests(self):
+    #     if len(self.Notifications['Requests']) == 0:
+    #         print("\nNo Request")
+    #     else:
+    #         i = 0
+    #         print(self.Notifications['Requests'])
+    #         for EachRequest, resp in self.Notifications['Requests'].items():
+    #             EachRequest = EachRequest.split("<")
+    #             tstr = f"{i}. Group ID: {EachRequest[2]} Group Name: {EachRequest[3]} Present Responce: {resp}"
+    #             print(tstr)
+    #             i = i + 1
+    #
+    #         print("1. Change Responce")
+    #         print("2. Exist")
+    #         op = self.MyInput(">>>")
+    #         if op == '1':
+    #             print("Enter 'yes' (for joining)")
+    #             print("Enter 'no' (for rejecting)")
+    #             print("Enter 'pen' (for latter)")
+    #             resp = self.MyInput(">>>")
+    #             if resp != 'pen':
+    #                 ############################
+    #                 # building responce for sending to server
+    #                 gID = input("Enter Group ID: ")
+    #                 resp = "res<gjr<" + gID + "<" + resp
+    #                 self.Socket.sendall(resp.encode('UTF-8'))
+    #                 #del self.Notifications['Requests'][]
+    #         elif op == '2':
+    #             pass
+    #         else:
+    #             print("Select a Valid Option")
 
 
     def NotificationHandler(self):
