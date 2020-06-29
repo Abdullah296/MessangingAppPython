@@ -115,6 +115,7 @@ class Client:
         root1.geometry('500x400')  
         root1.title('Messaging app')
         root1.configure(background = "light green")
+        root1.iconbitmap('pic.ico')
         
         Label(root1, text="ENTER YOUR DATA, HERE", bg = "light green").grid(row= 2, column = 0, columnspan = 2)
         
@@ -186,6 +187,9 @@ class Client:
         Gui.geometry('500x400')  
         Gui.title('Messaging app')
         Gui.configure(background = "light green")
+        #p1 = PhotoImage(file = 'pic.ico')
+        #Gui.iconphoto(False, 'pic.ico')
+        Gui.iconbitmap('pic.ico')
     
         Label(Gui, text="WELCOME TO MESSAGING APP",  bg = "light green", font= ("bold", 12)).grid(row=1, column= 3, columnspan = 3)
         Label(Gui, text="",  bg = "light green").grid(row=2, column= 3)
@@ -287,6 +291,7 @@ class Client:
         
         root4.geometry('400x400')  
         root4.title('Messaging app')
+        root4.iconbitmap('pic.ico')
         
     
         Label(root4, text="Add Contact",   font= ("bold", 12)).grid(row=1, column= 3)
@@ -310,11 +315,12 @@ class Client:
        global root2
        global Display
        global Display2
-       a = 0
+       global Name
        
        root2 = Tk()
        root2.geometry('500x400')  
        root2.title('Successfully login')
+       root2.iconbitmap('pic.ico')
    
        TopFrame = Frame(root2).pack(side=TOP)
     ################################################################################################################################## 
@@ -389,7 +395,7 @@ class Client:
        def Namechange(*args):
            Name.configure(state='normal')
            Name.delete(1.0, END)
-           Name.insert('end', variableee.get())
+           Name.insert('end', "         "+variableee.get())
            Name.configure(state='disabled')
            
        def updatehistory(*args):
@@ -595,6 +601,7 @@ class Client:
         
         root5.geometry('400x400')  
         root5.title('Messaging app')
+        root5.iconbitmap('pic.ico')
         
     
         Label(root5, text="Create Group",   font= ("bold", 12)).grid(row=1, column= 3)
@@ -882,15 +889,41 @@ class Client:
             elif msg[0] == 'm':     # a message
                 if msg[1][0] == 'g':        # a group ID
                     if msg[2] in self.MyContacts.keys():
-                        tmsg = f"In Group --> {self.MyGroups[msg[1]]}<->{self.MyContacts[msg[2]]} --> {msg[3]}"
-                        Display2.configure(state='normal')
-                        Display2.insert('end', '\n'+'In Group --> '+self.MyGroups[msg[1]]+'<->'+self.MyContacts[msg[2]]+'--> '+msg[3])
-                        Display2.configure(state='disabled')
+                        if (msg[3] !=  ' is Typing ')  and (msg[3] !=  'Message Read'):
+                            if(msg[2] != self.MyId):
+                                tmsg = f"In Group --> {self.MyGroups[msg[1]]}<->{self.MyContacts[msg[2]]} --> {msg[3]}"
+                                Display2.configure(state='normal')
+                                Display2.insert('end', '\n'+'In Group --> '+self.MyGroups[msg[1]]+'>'+self.MyContacts[msg[2]]+' '+msg[3])
+                                Display2.configure(state='disabled')
+                        else:
+                            Name.configure(state='normal')
+                            Name.delete(1.0, END)
+                            Name.insert('end',"       "+ variableee.get())
+                            Name.insert('end', '\n'+self.MyGroups[msg[1]]+'->'+self.MyContacts[msg[2]]+' '+msg[3])
+                            Name.configure(state='disabled')
+                            
+                        if msg[3] !=  ' is Typing ':
+                            if msg[3] !=  'Message Read':
+                                self.Chat('Message Read', msg[1] )
+                            
                     else:
-                        tmsg = f"In Group --> {self.MyGroups[msg[1]]}<->{msg[2]} --> {msg[3]}"
-                        Display2.configure(state='normal')
-                        Display2.insert('end', '\n'+'In Group --> '+self.MyGroups[msg[1]]+'<->'+msg[2]+'--> '+msg[3])
-                        Display2.configure(state='disabled')
+                        if (msg[3] !=  ' is Typing ')  and (msg[3] !=  'Message Read'):
+                            if(msg[2] != self.MyId):
+                                tmsg = f"In Group --> {self.MyGroups[msg[1]]}<->{msg[2]} --> {msg[3]}"
+                                Display2.configure(state='normal')
+                                Display2.insert('end', '\n'+'In Group --> '+self.MyGroups[msg[1]]+'<->'+msg[2]+'--> '+msg[3])
+                                Display2.configure(state='disabled')
+                        else:
+                            Name.configure(state='normal')
+                            Name.delete(1.0, END)
+                            Name.insert('end',"       "+ variableee.get())
+                            Name.insert('end', '\n'+self.MyGroups[msg[1]]+'->'+msg[2]+' '+msg[3])
+                            Name.configure(state='disabled')
+                            
+                        if msg[3] !=  ' is Typing ':
+                            if msg[3] !=  'Message Read':
+                                self.Chat('Message Read', msg[1] )
+                            
                 else:       # a user ID
                     if msg[1] in self.MyContacts.keys():
                         tmsg = f"{self.MyContacts[msg[1]]} --> {msg[2]}"
@@ -899,9 +932,14 @@ class Client:
                                 Display2.insert('end', '\n'+self.MyContacts[msg[1]]+'--> '+msg[2])
                                 Display2.configure(state='disabled')
                         else:
-                            Display2.configure(state='normal')
-                            Display2.insert('end', '\n'+self.MyContacts[msg[1]]+': '+msg[2])
-                            Display2.configure(state='disabled')
+                            Name.configure(state='normal')
+                            Name.delete(1.0, END)
+                            Name.insert('end',"       "+ variableee.get())
+                            Name.insert('end', '\n'+self.MyContacts[msg[1]]+': '+msg[2])
+                            Name.configure(state='disabled')
+                            #Display2.configure(state='normal')
+                            #Display2.insert('end', '\n'+self.MyContacts[msg[1]]+': '+msg[2])
+                            #Display2.configure(state='disabled')
                             
                         
                         if msg[2] !=  ' is Typing ':
@@ -915,10 +953,13 @@ class Client:
                                 Display2.insert('end', '\n'+msg[1]+'--> '+msg[2])
                                 Display2.configure(state='disabled')
                         else:
-                            Display2.configure(state='normal')
-                            Display2.insert('end', '\n'+msg[1]+'::  '+msg[2])
-                            Display2.configure(state='disabled')
-                                
+                            Name.configure(state='normal')
+                            Name.delete(1.0, END)
+                            Name.insert('end',"       "+ variableee.get())
+                            Name.insert('end', '\n'+msg[1]+'::  '+msg[2])
+                            Name.configure(state='disabled')
+                            
+                            
                         if msg[2] !=  ' is Typing ':
                             if msg[2] !=  'Message Read':
                                 self.Chat('Message Read', msg[1] )
@@ -951,7 +992,7 @@ class Client:
             print("Socket creating error :", err)
             sys.exit("Socket creating error ")
         ServerIP = 'localhost'
-        ServerPort = 8080
+        ServerPort = 12345
         ServerAdress = (ServerIP, ServerPort)
         try:
             print("connecting to server :", ServerAdress)

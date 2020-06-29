@@ -585,7 +585,7 @@ class Client:
         except socket.error as err:
             print("Socket creating error :", err)
             sys.exit("Socket creating error ")
-        ServerIP = '192.168.1.26'
+        ServerIP = 'localhost'
         ServerPort = 12345
         ServerAdress = (ServerIP, ServerPort)
         try:
