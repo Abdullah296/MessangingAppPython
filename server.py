@@ -10,6 +10,7 @@ import tqdm
 import os
 
 class Server:
+    toDebug = False
     MaxClient = 10   # total clients to be handled at a time
     # OnlineClients = {}  # available clients
     Groups = {}     # Groups members with there IDs
@@ -38,6 +39,10 @@ class Server:
     # PendingRequests = { 'Client_ID':{ 'Group_ID': 'Responce'}
     #                       }
 
+    def DebugMessage(self, message):
+        if self.toDebug:
+            print(message)
+
     def GetID(self, sock):
         #   What it will do?
         #       it will return th id of the given socket
@@ -47,10 +52,10 @@ class Server:
         #       > if not matched continue
         #   Other
         #
-        print("finding id ...")
+        self.DebugMessage("Finding id ...")
         for id, s in self.ClientsSockets.items():
             if s == sock:
-                print("id found ...")
+                self.DebugMessage("ID found ...")
                 return id
 
     def SignIn(self, id, password, sock):
@@ -66,29 +71,23 @@ class Server:
         #       > send response = 'res<in<False' if not success
         #   Other
         #
-        print("Sign in request form ", id)
+        self.DebugMessage("Sign in request ...")
         if str(id) in str(self.ClientPass.keys()):
-            print("ID found ...")
             if str(self.ClientPass[id]) == str(password):
-                print("Password matched ...")
                 rep = 'res<in<True'
                 sock.sendall(rep.encode('UTF-8'))
                 print(self.ClientPass)
-                print("Adding Client's Socket to Available Clients Lists ...")
                 self.ClientsSockets[str(id)] = sock
-                print("added successfully ...")
-                print("available clients are ")
-                print(self.ClientsSockets)
-                print("updating Client's status ...")
+                print("Updating Client's status ...")
                 self.CurrentClientStatus[str(id)] = 'online'
-                print("updated successfully ...")
-                print(self.CurrentClientStatus)
             else:
                 print("Password not matched ...")
+                self.DebugMessage("Password not matched ...")
                 rep = 'res<in<False'
                 sock.sendall(rep.encode('UTF-8'))
         else:
             print("ID not present ...")
+            self.DebugMessage("ID not present ...")
             rep = 'res<in<False'
             sock.sendall(rep.encode('UTF-8'))
 
@@ -104,25 +103,15 @@ class Server:
         #       > send key to Client
         #   Other
         #
-        # print("New Sign Up request ...")
-        print("Generating Random key ...")
+        print("New Sign Up request ...")
         tID = random.randint(0, self.MaxClient)     # a temp ID
         tID = str(tID)
         if tID not in self.ClientPass.keys():
-            print("Adding to Client's list ...")
             self.ClientPass[tID] = str(password)
-            print(self.ClientPass)
-            print("Added Successfully ...")
-            print("Sending response to Client ...")
             temp = "res<up<" + tID
             sock.sendall(temp.encode('UTF-8'))
-            print("Sended Successfully ...")
-            print("updating Client's status ...")
             self.CurrentClientStatus[tID] = 'offline'
-            print("updated successfully ...")
-            print(self.CurrentClientStatus)
         else:
-            print("Key is present already ...")
             self.SignUp(password, sock)
 
     def CheckBuffer(self, stime):
@@ -141,7 +130,6 @@ class Server:
             time.sleep(stime)
             print("checking bufffer ...")
             pass
-
 
     def SendMessage(self, msg, id, sock):
         #   What it will do?
@@ -183,40 +171,24 @@ class Server:
         else:
             print("message sending request ...")
             if id[0] == 'g':    # its a grou;s id
-                print("a group id ...")
                 MyId = self.GetID(sock)
                 for EachMember in self.Groups[id]:
-                    print("sending message to client :", EachMember)
                     if EachMember in self.ClientsSockets.keys():
-                        print("client is online ...")
-                        print("sending message ...")
                         temp = "m<" + str(id) + "<" + str(MyId) + "<" + msg
                         self.ClientsSockets[EachMember].sendall(temp.encode('UTF-8'))
-                        print("message sent ...")
-    
                     else:
-                        print("client is not online ...")
-                        print("adding message to buffer for sending latter ...")
                         self.Buffer[str(EachMember)] = []
                         self.Buffer[str(EachMember)].append(msg)
-                        print("added to buffer ...")
                         print(self.Buffer)
             else:
                 MyId = self.GetID(sock)
-                print("a client's id ...")
                 if id in self.ClientsSockets.keys():
-                    print("client is online ...")
-                    print("sending message ...")
                     temp = MyId + "<" + msg
                     temp = "m<" + temp
                     self.ClientsSockets[id].sendall(temp.encode('UTF-8'))
-                    print("sent ...")
                 else:
-                    print("client is not online ...")
-                    print("adding to buffer ...")
                     self.Buffer[str(id)] = []
                     self.Buffer[id].append(msg)
-                    print("added ...")
 
     def Info(self, msg, sock):
         #   What it will do?
@@ -228,10 +200,8 @@ class Server:
         #            decode the given ids and send there status
         #   Other
         #   response format : MemberID:statsus<MemberID:statsus ...
-        print(msg)
-        print("got an info request ...")
+        print("Got an info request ...")
         rep = ''
-        print("gathering info ...")
         # if requests is for Group ID than
         # r<info<gID
         # len(msg) == 1 beacuse only one group ID will be passed
@@ -242,7 +212,6 @@ class Server:
         if msg[0][0] == 'g': # group members request
             if self.GetID(sock) in self.Groups[msg[0]]:  # a memeber of that group
                 for EachId in self.Groups[msg[0]]:  # getting info of group members
-                    print("for EachId in msg:", EachId)
                     if EachId in self.CurrentClientStatus.keys():
                         if self.CurrentClientStatus[EachId] == 'online':
                             if self.Admins[msg[0]] == EachId:
@@ -250,9 +219,7 @@ class Server:
                             else:
                                 rep = rep + str(EachId) + ":online<"
 
-                            print(rep)
                         else:
-                            print("else:")
                             if self.Admins[msg[0]] == EachId:
                                 rep = rep + str(EachId) + ":offline (Admin)<"
                             else:
@@ -265,24 +232,17 @@ class Server:
 
         else:
             for EachId in msg:
-                print("for EachId in msg:", EachId)
                 if EachId in self.CurrentClientStatus.keys():
                     if self.CurrentClientStatus[EachId] == 'online':
                         rep = rep + str(EachId) + ":online<"
-                        print(rep)
                     else:
-                        print("else:")
                         rep = rep + str(EachId) + ":offline<"
-                        print(rep)
                 else:
                     rep = rep + str(EachId) + ":Not found<"
 
-        print("gathered ...")
         rep = "res<info<" + rep
         print(rep)
-        print("sending to client ...")
         sock.sendall(str(rep).encode('UTF-8'))
-        print("sent ...")
 
     def CreateGroup(self, msg, sock):
         #   What it will do?
@@ -299,22 +259,16 @@ class Server:
         #       > add requester's ID to Admin list with group ID
         #   Other
         #
-        print("request for create a new group ...")
-        print("Generating Random key ...")
+        print("Request for create a new group ...")
         temp = random.randint(0, self.MaxClient)
         temp = str(temp)
         temp = "g" + temp
         # msg = ['Group Name','group members']
         if temp not in self.Groups.keys():
-            print("Adding to Group to list ...")
             self.Groups[temp] = []
-            print("updating GroupNames ...")
             self.GroupNames[temp] = str(msg[0])
-            print("updated ...")
-            print(self.GroupNames)
             # building request
             req = "req<gjr<" + temp + "<" + msg[0]
-            print(req)
             #######################################
             # Formate:
             # self.Requests = { 'client ID':{'Group ID':'Responce'},
@@ -326,9 +280,7 @@ class Server:
             # by default server will use 'pen' or pending responce
             ######################################
             # adding each member to self.Requests with group ID
-            print("Updating self.Requests")
             for EachId in str(msg[1]).split(":")[:-2]:
-                print("adding members ...")
                 if EachId in self.Requests.keys():
                     self.Requests[EachId][temp] = 'pen'
                 else:
@@ -336,12 +288,10 @@ class Server:
             print(self.Requests)
             #####################################
             # sending request to Each Member
-            print("sending request to group members")
             for EachId in str(msg[1]).split(":")[:-2]:
                 if EachId in self.CurrentClientStatus.keys():      # client with EachID exist
                     if self.CurrentClientStatus[EachId] == 'online':  # client is online
                         self.ClientsSockets[EachId].sendall(req.encode('UTF-8'))   # sending request
-                        print(f"sening request to {EachId}")
                     else:
                         if EachId in self.PendingRequests.keys():
                             self.PendingRequests[EachId][temp] = 'pen'
@@ -350,23 +300,16 @@ class Server:
             #####################################
             # adding admin to group member list
             id = self.GetID(sock)   # finding id of the requester
-            print("adding members to groups ...")
             self.Groups[temp] = [str(id)]
-            print("Added Successfully ...")
             print(self.Groups)
             #####################################
             # adding admin to group member list
-            print("Adding Group Admin ...")
             self.Admins[str(temp)] = str(id)
             print(self.Admins)
-            print("updated ...")
-            print("Sending key to Client ...")
             # building response
             temp = "res<cg<" + temp + "<" + msg[0]
             sock.sendall(temp.encode('UTF-8'))
-            print("Sended Successfully ...")
         else:
-            print("Key is present already ...")
             self.CreateGroup(msg, sock)
 
     def ChangeAdmin(self, msg, sock):
@@ -385,27 +328,17 @@ class Server:
         # formate
         # c<ca<Group_ID<New_Admin_ID
         # here msg = ['Group_ID','New_Admin_ID']
-        print("request for changing admin ...")
+        print("Request for changing admin ...")
         if sock in self.ClientsSockets.values():
-            print("socket found ...")
-            print("finding id of requester ...")
             MyId = self.GetID(sock)
-            print("Conferming admin ...")
             if self.Admins[msg[1]] == MyId:     # admin id matched
-                print("confermed admin ...")
-                print("changing admin ...")
                 self.Admins[msg[1]] = msg[0]    # setting new Admin
-                print("admin changed ...")
                 print(self.Admins)
                 rep = "res<ca<True<" + msg[0]
-                print("sending reply to client ...")
                 sock.sendall(rep.encode('UTF-8'))
-                print("sent ...")
             else:
                 rep = "res<ca<False<You are not the admin of this group"
-                print("sending reply to client ...")
                 sock.sendall(rep.encode('UTF-8'))
-                print("sent ...")
 
     def RemoveFromGroup(self,  msg, sock):
         #   What it will do?
@@ -420,18 +353,13 @@ class Server:
         #   Other
         #
         # msg = ['Member's_ID', 'Group_ID']
-        print("got a remove from group request ...")
+        print("Remove from group request ...")
         print(msg)
         MyId = self.GetID(sock)     # requester's ID
-        print('checking admin ...')
         if self.Admins[msg[1]] == MyId:   # checking Admin
-            print("admin conformed ...")
             if MyId != msg[0]:      # if member is not admin
                 if msg[0] in self.Groups[msg[1]]:  # checking Member
-                    print("removing from group ...")
                     self.Groups[msg[1]].remove(msg[0])  # removing member
-                    print("removed from group ...")
-                    print("sending reply to client ...")
                     rep = "res<rfg<True<Removed " + msg[0] + " from group " + msg[1]
                     sock.sendall(rep.encode('UTF-8'))
             else:
@@ -452,14 +380,11 @@ class Server:
         #   Other
         #
         # msg = [New_Member's_ID, Group_ID]
-        print("got an add member request ...")
+        print("Add member request ...")
         if msg[1] in self.Groups.keys():    # if group exist
-            print("group exist ...")
             MyId = self.GetID(sock)     # requester's ID
-            print("checking admin ...")
             if MyId == self.Admins[msg[1]]:     # if requester is admin
                 if msg[0] not in self.Groups[msg[1]]:   # if member not exist before
-                    print("adding member to list ...")
                     self.Groups[msg[1]].append(msg[0])
                     rep = "res<atg<True< Member " + msg[0] + " added to the group " + msg[1]
                     sock.sendall(rep.encode('UTF-8'))
@@ -473,16 +398,25 @@ class Server:
             rep = "res<atg<False<Group not exist"
             sock.sendall(rep.encode('UTF-8'))
 
+    def LeaveGroup(self, msg, sock):
+        print("Leave group request ...")
+        MyID = self.GetID(sock)
+        if MyID in self.Groups[msg]:
+            self.Groups[msg].remove(MyID)
+            res = f"res<lg<True<{msg}"
+            sock.sendall(res.encode('UTF-8'))
+        else:
+            res = f"res<lg<False<{msg}"
+            sock.sendall(res.encode('UTF-8'))
+
     def GJRespHandler(self, resp, sock):
         # Group Joining Responce Handler
-        print("got a responce on GJR ...")
+        print("Got a responce on GJR ...")
         MyId = self.GetID(sock)
         if MyId in self.Requests.keys():    # checking weather requester exist
             if resp[0] in self.Requests[MyId].keys():   # checking weather this request exist
                 if resp[1] == 'yes':
-                    print("ading member to group ...")
                     self.Groups[resp[0]].append(MyId)  # adding member to list
-                    print(self.Groups)
                     del self.Requests[MyId][resp[0]]  # deleting that request
                     rep = f"res<gjr<{resp[0]}<{self.GroupNames[resp[0]]}<True"
                     sock.sendall(rep.encode('UTF-8'))
@@ -500,14 +434,11 @@ class Server:
         #   Other
         #
         msg = msg.split("<")
-        print(msg)
         if msg[0] == 'r':
             if msg[1] == 'in':
                 try:
                     self.SignIn(msg[2], msg[3], sock)
-                except IndexError as err:
-                    print("Error in msg ...")
-                    print(err)
+                except IndexError:
                     rep = 'False'
                     sock.sendall(rep.encode('UTF-8'))
                 else:
@@ -515,13 +446,15 @@ class Server:
             if msg[1] == 'up':
                 try:
                     self.SignUp(msg[2], sock)
-                except IndexError as err:
-                    print("ERROR in message ...")
+                except IndexError:
+                    pass
             if msg[1] == 'info':
                 try:
                     self.Info(msg[2:], sock)
                 except IndexError as err:
-                    print("error in index ", err)
+                    pass
+            if msg[1] == 'lg':
+                self.LeaveGroup(msg[2], sock)
         if msg[0] == 'c':
             if msg[1] == 'cg':   # create group
                 self.CreateGroup(msg[2:], sock)
@@ -532,10 +465,7 @@ class Server:
             if msg[1] == 'ca': # change admin
                 self.ChangeAdmin(msg[2:], sock)
         if msg[0] == 'm':
-            if msg[2] == 'file':
-                self.recievefile(sock)
-            else:
-                self.SendMessage(msg[2], msg[1], sock)
+            self.SendMessage(msg[2], msg[1], sock)
         if msg[0] == 'res':
             self.GJRespHandler(msg[2:], sock)
 
@@ -574,14 +504,9 @@ class Server:
                 if sock in self.ClientsSockets.values():
                     for id, s in self.ClientsSockets.items():
                         if sock == s:
-                            print("deleting Socket from list ...")
                             del self.ClientsSockets[id]
-                            print("deleted ...")
                             print(self.ClientsSockets)
-                            print("updating client's status ...")
                             self.CurrentClientStatus[id] = 'offline'
-                            print("updated ...")
-                            print(self.CurrentClientStatus)
                             break
                 break
             else:
@@ -603,7 +528,6 @@ class Server:
             print("Creating Socket ...")
             self.Socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         except socket.error as err:
-            print("Socket creating error :", err)
             sys.exit("Socket creating error ")
         ServerIP = '192.168.1.26'
         ServerPort = 12345
@@ -612,16 +536,15 @@ class Server:
             print("Running Server at address :", ServerAdress)
             self.Socket.bind(ServerAdress)
         except socket.error as err:
-            print("Socket Binding error :", err)
             sys.exit(err)
         else:
-            print("Server Running Successfully")
+            print("Server Running Successfully ...")
 
         self.Socket.listen(self.MaxClient)
         while True:
-            print("Waiting for connections")
+            print("Waiting for connections ...")
             ClientSocket, ClientAdress = self.Socket.accept()
-            print("got a connection from ", ClientAdress)
+            print("Got a connection from ", ClientAdress)
             newClient = threading.Thread(target=self.Handler, args=(ClientSocket, ClientAdress))
             newClient.start()
 
