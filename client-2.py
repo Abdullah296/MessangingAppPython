@@ -4,8 +4,10 @@ import json     # for saving data
 import threading
 
 class Client:
-    toDebug = False
-    SaveFiles = False
+    ServerIP = None
+    ServerPort = None
+    toDebug = None
+    SaveFiles = None
     MyName = None     # My user name
     MyId = None   # My unique Id stored in server
     MyGroups = {}   # Groups which I have joined
@@ -98,13 +100,20 @@ class Client:
         #           > write data to this file
         #           > save this file
         #       Other
-        if self.MyStatus is True:
-            with open("MyContacts.json", 'w') as File:  # creating and than opening file
-                json.dump(self.MyContacts, File)    # writing data to file
-            with open("MyGroups.json", 'w') as File:
-                json.dump(self.MyGroups, File)
-        else:
-            print("Please Sign in")
+        if self.SaveFiles:
+            if self.MyStatus is True:
+                with open("MyContacts.json", 'w') as File:  # creating and than opening file
+                    json.dump(self.MyContacts, File)  # writing data to file
+                with open("MyGroups.json", 'w') as File:
+                    json.dump(self.MyGroups, File)
+                with open("MyID.json", 'w') as File:
+                    json.dump(self.MyId, File)
+                with open("MyName.json", 'w') as File:
+                    json.dump(self.MyId, File)
+                with open("MyNotification.json", 'w') as File:
+                    json.dump(self.Notifications, File)
+            else:
+                print("Please Sign in")
 
     def LoadData(self):
         #       What it will do?
@@ -118,14 +127,39 @@ class Client:
             try:
                 File = open("MyContacts.json")
                 self.MyContacts = json.load(File)
-            except FileNotFoundError as err:
+            except FileNotFoundError:
                 self.DebugMessage("No Saved Data found")
             else:
                 self.DebugMessage("Data Loaded successfully")
+
             try:
                 File = open("MyGroups.json")
                 self.MyGroups = json.load(File)
-            except FileNotFoundError as err:
+            except FileNotFoundError:
+                self.DebugMessage("No Saved Data found")
+            else:
+                self.DebugMessage("Data Loaded successfully")
+
+            try:
+                File = open("MyID.json")
+                self.MyId = json.load(File)
+            except FileNotFoundError:
+                self.DebugMessage("No Saved Data found")
+            else:
+                self.DebugMessage("Data Loaded successfully")
+
+            try:
+                File = open("MyName.json")
+                self.MyName = json.load(File)
+            except FileNotFoundError:
+                self.DebugMessage("No Saved Data found")
+            else:
+                self.DebugMessage("Data Loaded successfully")
+
+            try:
+                File = open("MyNotification.json")
+                self.MyId = json.load(File)
+            except FileNotFoundError:
                 self.DebugMessage("No Saved Data found")
             else:
                 self.DebugMessage("Data Loaded successfully")
@@ -540,9 +574,7 @@ class Client:
             self.Socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         except socket.error:
             sys.exit("Socket creating error ")
-        ServerIP = 'localhost'
-        ServerPort = 8080
-        ServerAdress = (ServerIP, ServerPort)
+        ServerAdress = (self.ServerIP, self.ServerPort)
         try:
             self.DebugMessage(f"connecting to server : {ServerAdress}")
             self.Socket.connect(ServerAdress)
@@ -625,17 +657,21 @@ class Client:
                 else:
                     print("Please Enter a Valid Option")
 
-    def __init__(self):
+    def __init__(self, ServerIP, ServerPort, SaveFiles, DebugMode):
         #       What it will do?
         #           it will call the self.Decoder funtion when ever an object will be created
         #       How it will do?
         #
         #       Other
         try:
+            self.ServerIP = ServerIP
+            self.ServerPort = ServerPort
+            self.SaveFiles = SaveFiles
+            self.toDebug = DebugMode
             self.Decoder()
         except KeyboardInterrupt:
             self.DebugMessage("Saving data ")
 
 
 if __name__ == '__main__':
-    MyClient = Client()
+    MyClient = Client(ServerIP='localhost', ServerPort=8080, SaveFiles=False, DebugMode= False)
