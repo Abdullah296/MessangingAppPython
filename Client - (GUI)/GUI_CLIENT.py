@@ -9,6 +9,8 @@ from tkinter import messagebox
 from PIL import Image, ImageTk
 
 class Client:
+    ServerIP = None
+    ServerPort = None
     MyName = None     # My user name
     MyId = None   # My unique Id stored in server
     MyGroups = {}   # Groups which I have joined
@@ -977,7 +979,7 @@ class Client:
                     self.Socket.sendall(resp.encode('UTF-8'))
 
 
-    def ConnectToServer(self):
+    '''def ConnectToServer(self):
         #       What it will do?
         #           it will connect to server
         #       How it will do?
@@ -997,13 +999,35 @@ class Client:
         try:
             print("connecting to server :", ServerAdress)
             self.Socket.connect(ServerAdress)
-            '''RThread = threading.Thread(target=self.Receive)
-            RThread.start()'''
+            RThread = threading.Thread(target=self.Receive)
+            RThread.start()
         except socket.error as err:
             print("error in connecting to server :", err)
             sys.exit("error in connecting to server :")
         else:
-            print("connected to the server")
+            print("connected to the server")'''
+            
+    def ConnectToServer(self):
+        #       What it will do
+        #           it will connect to server
+        #       How it will do
+        #            create a new socket
+        #            connect to server
+        #       Other
+        try:
+            # self.MyName = input(Enter user name )
+            #self.DebugMessage(Creating Socket)
+            self.Socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        except socket.error:
+            sys.exit('Socket creating error' )
+        ServerAdress = (self.ServerIP, self.ServerPort)
+        try:
+            #self.DebugMessage(fconnecting to server  {ServerAdress})
+            self.Socket.connect(ServerAdress)
+        except socket.error:
+            sys.exit('error in connecting to server' )
+        else:
+            print('connected to the server')
 
     def Decoder(self):
         #       What it will do?
@@ -1020,13 +1044,15 @@ class Client:
                 self.signin()
                    
 
-    def __init__(self):
+    def __init__(self, ServerIP, ServerPort):
         #       What it will do?
         #           it will call the self.Decoder funtion when ever an object will be created
         #       How it will do?
         #
         #       Other
         try:
+            self.ServerIP = ServerIP
+            self.ServerPort = ServerPort
             self.Decoder()
         except KeyboardInterrupt:
             print("saving data ")
@@ -1035,4 +1061,4 @@ class Client:
 
 
 if __name__ == '__main__':
-    MyClient = Client()
+    MyClient = Client(ServerIP='localhost', ServerPort=8080)

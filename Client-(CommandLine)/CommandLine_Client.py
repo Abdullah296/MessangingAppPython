@@ -2,11 +2,12 @@ import socket   # for creating sockets
 import sys      # for handling exceptions
 import json     # for saving data
 import threading
-import os
-import tqdm
-
 
 class Client:
+    ServerIP = None
+    ServerPort = None
+    toDebug = None
+    SaveFiles = None
     MyName = None     # My user name
     MyId = None   # My unique Id stored in server
     MyGroups = {}   # Groups which I have joined
@@ -18,7 +19,7 @@ class Client:
     Notifications = {'Requests': {}, 'Messages': []}
     # formate:
     # Notification = {
-    #                   'Requests' : { 'request' : 'Response'}
+    #                   'Requests' : { 'request' : 'Responce'}
     #                   'Messages' : []
     #                   }
 
@@ -40,6 +41,9 @@ class Client:
     #       Information Request (for current status online/offline)
     #           request format: r<info<ClientID<ClientID ... or r<info<GroupID
     #           response format: res<info<ID:Status<ID:Status ...
+    #       Leave Group Request:
+    #           request formate: r<lg<Group_ID
+    #           responce formate: res<lg<True/False<Group_ID
     # In Command Type
     #       Create Group
     #           request format:c<cg<GroupName<ID:ID:ID
@@ -73,6 +77,20 @@ class Client:
     ###############################################################################
     ###############################################################################
 
+    def MyInput(self, message):
+        while True:
+            variable = input(message)
+            if len(variable) == 0:
+                print("Enter a valid input")
+            else:
+                break
+        return variable
+
+
+    def DebugMessage(self, message):
+        if self.toDebug:
+            print(message)
+
     def SaveData(self):
         #       What it will do?
         #           it will save data like contacts and group information to json fills to hardderive
@@ -82,13 +100,20 @@ class Client:
         #           > write data to this file
         #           > save this file
         #       Other
-        if self.MyStatus is True:
-            with open("MyContacts.json", 'w') as File:  # creating and than opening file
-                json.dump(self.MyContacts, File)    # writing data to file
-            with open("MyGroups.json", 'w') as File:
-                json.dump(self.MyGroups, File)
-        else:
-            print("Please Sign in")
+        if self.SaveFiles:
+            if self.MyStatus is True:
+                with open("MyContacts.json", 'w') as File:  # creating and than opening file
+                    json.dump(self.MyContacts, File)  # writing data to file
+                with open("MyGroups.json", 'w') as File:
+                    json.dump(self.MyGroups, File)
+                with open("MyID.json", 'w') as File:
+                    json.dump(self.MyId, File)
+                with open("MyName.json", 'w') as File:
+                    json.dump(self.MyId, File)
+                with open("MyNotification.json", 'w') as File:
+                    json.dump(self.Notifications, File)
+            else:
+                print("Please Sign in")
 
     def LoadData(self):
         #       What it will do?
@@ -102,17 +127,42 @@ class Client:
             try:
                 File = open("MyContacts.json")
                 self.MyContacts = json.load(File)
-            except FileNotFoundError as err:
-                print("No Saved Data found")
+            except FileNotFoundError:
+                self.DebugMessage("No Saved Data found")
             else:
-                print("Data Loaded successfully")
+                self.DebugMessage("Data Loaded successfully")
+
             try:
                 File = open("MyGroups.json")
                 self.MyGroups = json.load(File)
-            except FileNotFoundError as err:
-                print("No Saved Data found")
+            except FileNotFoundError:
+                self.DebugMessage("No Saved Data found")
             else:
-                print("Data Loaded successfully")
+                self.DebugMessage("Data Loaded successfully")
+
+            try:
+                File = open("MyID.json")
+                self.MyId = json.load(File)
+            except FileNotFoundError:
+                self.DebugMessage("No Saved Data found")
+            else:
+                self.DebugMessage("Data Loaded successfully")
+
+            try:
+                File = open("MyName.json")
+                self.MyName = json.load(File)
+            except FileNotFoundError:
+                self.DebugMessage("No Saved Data found")
+            else:
+                self.DebugMessage("Data Loaded successfully")
+
+            try:
+                File = open("MyNotification.json")
+                self.MyId = json.load(File)
+            except FileNotFoundError:
+                self.DebugMessage("No Saved Data found")
+            else:
+                self.DebugMessage("Data Loaded successfully")
 
         else:
             print("Please Sign in")
@@ -136,16 +186,6 @@ class Client:
                 for id, name in self.MyContacts.items():
                     msg = msg + "<" + str(id)
                 self.Socket.sendall(msg.encode('UTF-8'))
-                '''info = self.Socket.recv(1024).decode('UTF-8')
-                info = info.split("<")
-                for EachInfo in info[:-1]:
-                    EachInfo = EachInfo.split(":")
-                    if EachInfo[0] in self.MyContacts.keys():
-                        print(f"Name :{self.MyContacts[EachInfo[0]]}", f"ID :{EachInfo[0]}", f"status :{EachInfo[1]}",
-                              sep='     ')
-                    else:
-                        print(f"Name :Not Saved", f"ID :{EachInfo[0]}", f"status :{EachInfo[1]}", sep='     ')'''
-
         else:
             print("Please Sign in")
 
@@ -168,20 +208,6 @@ class Client:
             # yield gID
             msg = msg + gID
             self.Socket.sendall(msg.encode('UTF-8'))
-            '''info = self.Socket.recv(1024).decode('UTF-8')
-            info = info.split("<")
-            if info[0][0] == 'S':
-                print(info)
-            else:
-                for EachInfo in info[:-1]:
-                    EachInfo = EachInfo.split(":")
-                    if EachInfo[0] in self.MyContacts.keys():
-                        print(f"Name :{self.MyContacts[EachInfo[0]]}", f"ID :{EachInfo[0]}", f"status :{EachInfo[1]}",
-                              sep='     ')
-                    elif EachInfo[0] == self.MyId:
-                        print(f"You ", f"ID :{EachInfo[0]}", f"status :{EachInfo[1]}", sep='     ')
-                    else:
-                        print(f"Name :Not Saved", f"ID :{EachInfo[0]}", f"status :{EachInfo[1]}", sep='     ')'''
             return str(gID)
         else:
             print("Please Sign in")
@@ -194,8 +220,8 @@ class Client:
         #           > build request foramte (r<up<password)
         #           > take response from server (unique_ID)
         #       Other
-        self.MyName = input("Enter your User Name :")
-        temp = input("Enter Your Password :")
+        self.MyName = self.MyInput("Enter your User Name :")
+        temp = self.MyInput("Enter Your Password :")
         temp = "r<up<" + temp
         self.Socket.sendall(temp.encode('UTF-8'))
         msg = self.Socket.recv(1024).decode('UTF-8')
@@ -219,8 +245,8 @@ class Client:
         if self.MyName is None:
             self.MyName = input("Enter User Name :")
         if self.MyId is None:
-            self.MyId = input("Enter Your ID :")
-        temp = input("Enter Your Password :")
+            self.MyId = self.MyInput("Enter Your ID :")
+        temp = self.MyInput("Enter Your Password :")
         temp = "r<in<"+str(self.MyId)+"<"+str(temp)
         self.Socket.sendall(temp.encode('UTF-8'))
         msg = self.Socket.recv(1024).decode('UTF-8')
@@ -242,16 +268,14 @@ class Client:
         #           > build the request formate (c<cg<member's_ID<member's_ID ...)
         #           > take response from the server ('create ' or 'not created')
         #       Other
-        tname = input("Enter Group Name :")
+        tname = self.MyInput("Enter Group Name :")
         rep = "c<cg<"+tname + "<"
         a = None
         print("Enter 'end' to exit")
         while a != 'end':
-            a = input("Enter User Id to Add in this Group:")
+            a = self.MyInput("Enter User Id to Add in this Group:")
             rep = rep + a + ":"
-        
         self.Socket.sendall(rep.encode('UTF-8'))
-        #print(rep)
 
     def ChangeAdmin(self):
         #       What it will do?
@@ -285,9 +309,8 @@ class Client:
         #           > take response from the server ('Admin changed'/'You are not the admin of this group')
         #       Other
         gID = self.GroupMembers()
-        cID = input("Select Group Member: ")
+        cID = self.MyInput("Select Group Member: ")
         req = "c<rfg<" + cID + "<" + gID
-        print(req)
         self.Socket.sendall(req.encode('UTF-8'))
 
     def AddToGroup(self):
@@ -302,9 +325,9 @@ class Client:
         #       Other
         req = "c<atg<"
         print(self.MyGroups)
-        gID = input("Enter group ID: ")
+        gID = self.MyInput("Enter group ID: ")
         print(self.MyContacts)
-        cID = input("Enter new member ID: ")
+        cID = self.MyInput("Enter new member ID: ")
         req = req + cID + "<" + gID
         self.Socket.sendall(req.encode('UTF-8'))
 
@@ -327,8 +350,8 @@ class Client:
         #           (it does not make any request to server)
         #       Other
         if self.MyStatus is True:
-            tid = input("Enter ID :")
-            tname = input("Enter Name :")
+            tid = self.MyInput("Enter ID: ")
+            tname = self.MyInput("Enter Name :")
             if tid not in self.MyContacts.keys():
                 self.MyContacts[str(tid)] = tname
                 print("Added successfully")
@@ -362,72 +385,25 @@ class Client:
         print("1. In group")
         print("2. with client")
         print("3. Exit")
-        t = input(">>>")
+        t = self.MyInput(">>>")
         if t == '1':
             print(self.MyGroups)
-            OtherClient = input("Enter Group ID :")
-            print("1. Send message")
-            print("2. Send File")
-            iuy = input('>>>')
-            if iuy == '1':
-                print('Enter \end to  End conversation')
-                msg = input(">>>")
-                while msg!='\end':
-                    msg = "m<" + OtherClient + "<" + msg
-                    self.Socket.sendall(msg.encode('UTF-8'))
-                    msg = input(">>>")
-            elif iuy == '2':
-                msg = 'file'
+            OtherClient = self.MyInput("Enter Group ID :")
+            msg = self.MyInput(">>>")
+            while msg!='end':
                 msg = "m<" + OtherClient + "<" + msg
-                self.Sendfile()
+                self.Socket.sendall(msg.encode('UTF-8'))
+                msg = self.MyInput(">>>")
                 
         if t == '2':
             print(self.MyContacts)
-            OtherClient = input("Enter Client's ID :")
-            print("1. Send message")
-            print("2. Send File")
-            iuy = input('>>>')
-            if iuy == '1':
-                print('Enter \end to  End conversation')
-                msg = input(">>>")
-                while msg!='\end':
-                    msg = "m<" + OtherClient + "<" + msg
-                    self.Socket.sendall(msg.encode('UTF-8'))
-                    msg = input(">>>")
-            elif iuy == '2':
-                msg = 'file'
-                msg = "m<" + OtherClient + "<" + msg
-                self.Sendfile()
-                '''
-            msg = input(">>>")
-            while msg != '\end':
+            OtherClient = self.MyInput("Enter Client's ID :")
+            msg = self.MyInput(">>>")
+            while msg != 'end':
                 msg = "m<" + OtherClient + "<" + msg
                 self.Socket.sendall(msg.encode('UTF-8'))
-                msg = input(">>>")'''
-                
-    def Sendfile(self):
-        #filename = filedialog.askopenfilename(initialdir = "/",title = "Select file",filetypes = (("text file","*.txt"),("all files","*.*")))
-        filename = input('Enter file location:  ')
-        BUFFER_SIZE = 4096 # send 4096 bytes each time step
-        
-        #filename = "D:\hello.txt"
-        filesize = os.path.getsize(filename)
-        #s = socket.socket()
-        #print(f"[+] Connecting to {host}:{port}")
-        #s.connect((host, port))
-        #print("[+] Connected.")
-    
-        self.Socket.send(f"{filename} {filesize}".encode())
-    
-        progress = tqdm.tqdm(range(filesize), f"Sending {filename}", unit="B", unit_scale=True, unit_divisor=1024)
-        with open(filename, "rb") as f:
-            for _ in progress:
-                bytes_read = f.read(BUFFER_SIZE)
-                if not bytes_read:
-                    break
-                self.Socket.sendall(bytes_read)
-                progress.update(len(bytes_read))
-            
+                msg = self.MyInput(">>>")
+
     def close(self):
         #       What it will do?
         #           it will close the socket
@@ -440,6 +416,18 @@ class Client:
         except socket.error as err:
             print("socket closing error :",err)
             sys.exit("Socket closing error")
+
+    def LeaveGroup(self):
+        if self.MyStatus:
+            print(self.MyGroups)
+            gId = self.MyInput("Enter Group ID: ")
+            if gId in self.MyGroups.keys():
+                req = f"r<lg<{gId}"
+                self.Socket.sendall(req.encode('UTF-8'))
+            else:
+                print("Enter correct Group ID")
+        else:
+            print("Please sign in")
 
     def ViewMesssages(self):
         if len(self.Notifications['Messages']) == 0:
@@ -455,34 +443,32 @@ class Client:
             print("\nNo Request")
         else:
             i = 0
-            
-            request = []
+            print(self.Notifications['Requests'])
             for EachRequest, resp in self.Notifications['Requests'].items():
-                request.append(EachRequest)
                 EachRequest = EachRequest.split("<")
-                tstr = f"{i}. Group ID: {EachRequest[2]} Group Name: {EachRequest[3]} Present Response: {resp}"
+                tstr = f"{i}. Group ID: {EachRequest[2]} Group Name: {EachRequest[3]} Present Responce: {resp}"
                 print(tstr)
                 i = i + 1
-            
-            print(request)
-            print("\n1. Change Response")
-            print("2. Exit")
-            op = input(">>>")
+
+            print("1. Change Responce")
+            print("2. Exist")
+            op = self.MyInput(">>>")
             if op == '1':
-                rno = input("Enter Request No: ")
                 print("Enter 'yes' (for joining)")
                 print("Enter 'no' (for rejecting)")
-                print("Enter 'pending' (for later)")
-                resp = input(">>> ")
-                if resp != 'pending':
+                print("Enter 'pen' (for latter)")
+                resp = self.MyInput(">>>")
+                if resp != 'pen':
                     ############################
                     # building responce for sending to server
                     gID = input("Enter Group ID: ")
                     resp = "res<gjr<" + gID + "<" + resp
-                    lll = request[0]
-                    del self.Notifications['Requests'][lll]
                     self.Socket.sendall(resp.encode('UTF-8'))
-                    
+                    #del self.Notifications['Requests'][]
+            elif op == '2':
+                pass
+            else:
+                print("Select a Valid Option")
 
 
     def NotificationHandler(self):
@@ -500,14 +486,13 @@ class Client:
     def Receive(self):
         while True:
             msgS = self.Socket.recv(1024).decode('UTF-8')
-            #print(msgS)
+            print(msgS)
             msg = msgS.split("<")
-            #print(msg) # for debug purpose
+            print(msg) # for debug purpose
             if msg[0] == 'res':     # it's a response from a server
                 if msg[1] == 'info':    # an info request responce
                     if msg[2][0] == 'S':
                         print(msg[2])
-                        
                     else:
                         for EachInfo in msg[2:-1]:
                             EachInfo = EachInfo.split(":")
@@ -519,7 +504,7 @@ class Client:
                                 print(f"Name :Not Saved", f"ID :{EachInfo[0]}", f"status :{EachInfo[1]}", sep='     ')
                 if msg[1] == 'cg':
                     self.MyGroups[msg[2]] = msg[3]
-                    print("\nGroup Created\n My Group are: \n", self.MyGroups)
+                    print(self.MyGroups)
                 if msg[1] == 'ca':
                     if msg[2] == 'True':
                         print("Group Admin has changed")
@@ -549,13 +534,18 @@ class Client:
                         print("added to the group")
                     elif msg[4] == 'False':
                         print("can not be added to the group")
+                if msg[1] == 'lg':
+                    if msg[2] == 'True':
+                        print(f"You left Group{msg[3]}")
+                    elif msg[2] == 'False':
+                        print(f"You can't left Group{msg[3]}")
             elif msg[0] == 'm':     # a message
                 if msg[1][0] == 'g':        # a group ID
                     if msg[2] in self.MyContacts.keys():
-                        tmsg = f"In Group --> {self.MyGroups[msg[1]]}<->{self.MyContacts[msg[2]]} --> {msg[3]}"
+                        tmsg = f"In Group --> {self.MyGroups[msg[1]]} <-> {self.MyContacts[msg[2]]} --> {msg[3]}"
                         self.Notifications['Messages'].append(tmsg)
                     else:
-                        tmsg = f"In Group --> {self.MyGroups[msg[1]]}<->{msg[2]} --> {msg[3]}"
+                        tmsg = f"In Group --> {self.MyGroups[msg[1]]} <-> {msg[2]} --> {msg[3]}"
                         self.Notifications['Messages'].append(tmsg)
                 else:       # a user ID
                     if msg[1] in self.MyContacts.keys():
@@ -580,21 +570,15 @@ class Client:
         #       Other
         try:
             # self.MyName = input("Enter user name :")
-            print("Creating Socket")
+            self.DebugMessage("Creating Socket")
             self.Socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        except socket.error as err:
-            print("Socket creating error :", err)
+        except socket.error:
             sys.exit("Socket creating error ")
-        ServerIP = 'localhost'
-        ServerPort = 12345
-        ServerAdress = (ServerIP, ServerPort)
+        ServerAdress = (self.ServerIP, self.ServerPort)
         try:
-            print("connecting to server :", ServerAdress)
+            self.DebugMessage(f"connecting to server : {ServerAdress}")
             self.Socket.connect(ServerAdress)
-            '''RThread = threading.Thread(target=self.Receive)
-            RThread.start()'''
-        except socket.error as err:
-            print("error in connecting to server :", err)
+        except socket.error:
             sys.exit("error in connecting to server :")
         else:
             print("connected to the server")
@@ -611,21 +595,19 @@ class Client:
             if self.Socket is None:     # not connected to server
                 print("1. Go Online")
                 print("2. Exit")
-                temp = input(">>>")
+                temp = self.MyInput(">>>")
                 if temp is '1':
                     self.ConnectToServer()
                 elif temp is '2':
                     break
             elif self.MyStatus is False:     # I have't Sign in
-                print("\n1. Sign UP")
+                print("\n\n1. Sign UP")
                 print("2. Sign In")
-                temp = input(">>>")
+                temp = self.MyInput(">>>")
                 if temp is '1':
                     self.SignUp()
                 elif temp is '2':
                     self.SignIn()
-                    #print("loading data")
-                    #self.LoadData()
             else:
                 print("\n\n1. Create New Group")
                 print("2. Change Group Admin")
@@ -639,8 +621,9 @@ class Client:
                 print("a. View Group Members")
                 print("b. View Messages")
                 print("c. View Requests")
-                print("d. Exit")
-                temp = input(">>>")
+                print("d. Leave Group")
+                print("e. Exit")
+                temp = self.MyInput(">>>")
                 if temp is '1':
                     self.CreateGroup()
                 elif temp is '2':
@@ -666,27 +649,29 @@ class Client:
                 elif temp is 'c':
                     self.ViewRequests()
                 elif temp is 'd':
+                    self.LeaveGroup()
+                elif temp is 'e':
                     #self.SaveData()
                     self.Socket.close()
                     break
                 else:
                     print("Please Enter a Valid Option")
-                    
-            ##write here some thing## for clear sceenn
 
-    def __init__(self):
+    def __init__(self, ServerIP, ServerPort, SaveFiles, DebugMode):
         #       What it will do?
         #           it will call the self.Decoder funtion when ever an object will be created
         #       How it will do?
         #
         #       Other
         try:
+            self.ServerIP = ServerIP
+            self.ServerPort = ServerPort
+            self.SaveFiles = SaveFiles
+            self.toDebug = DebugMode
             self.Decoder()
         except KeyboardInterrupt:
-            print("saving data ")
-            #self.SaveData()
-            print("Saved data")
+            self.DebugMessage("Saving data ")
 
 
 if __name__ == '__main__':
-    MyClient = Client()
+    MyClient = Client(ServerIP='localhost', ServerPort=8080, SaveFiles=False, DebugMode= True)
