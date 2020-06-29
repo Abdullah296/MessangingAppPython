@@ -674,4 +674,4 @@ class Client:
 
 
 if __name__ == '__main__':
-    MyClient = Client(ServerIP='localhost', ServerPort=8080, SaveFiles=False, DebugMode= False)
+    MyClient = Client(ServerIP='localhost', ServerPort=8080, SaveFiles=False, DebugMode= True)

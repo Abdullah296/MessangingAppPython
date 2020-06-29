@@ -10,6 +10,8 @@ import tqdm
 import os
 
 class Server:
+    ServerIP = None
+    ServerPort = None
     toDebug = False
     MaxClient = 10   # total clients to be handled at a time
     # OnlineClients = {}  # available clients
@@ -514,7 +516,7 @@ class Server:
 
 
 
-    def __init__(self):
+    def __init__(self, ServerIP, ServerPort):
         #   What it will do?
         #       inilize the server
         #   How it will do?
@@ -525,13 +527,13 @@ class Server:
         #   Other
         #
         try:
+            self.ServerIP = ServerIP
+            self.ServerPort = ServerPort
             print("Creating Socket ...")
             self.Socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         except socket.error as err:
             sys.exit("Socket creating error ")
-        ServerIP = '192.168.1.26'
-        ServerPort = 12345
-        ServerAdress = (ServerIP, ServerPort)
+        ServerAdress = (self.ServerIP, self.ServerPort)
         try:
             print("Running Server at address :", ServerAdress)
             self.Socket.bind(ServerAdress)
@@ -550,4 +552,4 @@ class Server:
 
 
 if __name__ == '__main__':
-    MyServer = Server()
+    MyServer = Server(ServerIP='localhost', ServerPort=8080)
