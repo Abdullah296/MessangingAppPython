@@ -2,6 +2,9 @@ import socket   # for creating sockets
 import sys      # for handling exceptions
 import json     # for saving data
 import threading
+import os
+import tqdm
+
 
 class Client:
     MyName = None     # My user name
@@ -246,7 +249,9 @@ class Client:
         while a != 'end':
             a = input("Enter User Id to Add in this Group:")
             rep = rep + a + ":"
+        
         self.Socket.sendall(rep.encode('UTF-8'))
+        #print(rep)
 
     def ChangeAdmin(self):
         #       What it will do?
@@ -361,21 +366,68 @@ class Client:
         if t == '1':
             print(self.MyGroups)
             OtherClient = input("Enter Group ID :")
-            msg = input(">>>")
-            while msg!='\end':
-                msg = "m<" + OtherClient + "<" + msg
-                self.Socket.sendall(msg.encode('UTF-8'))
+            print("1. Send message")
+            print("2. Send File")
+            iuy = input('>>>')
+            if iuy == '1':
+                print('Enter \end to  End conversation')
                 msg = input(">>>")
+                while msg!='\end':
+                    msg = "m<" + OtherClient + "<" + msg
+                    self.Socket.sendall(msg.encode('UTF-8'))
+                    msg = input(">>>")
+            elif iuy == '2':
+                msg = 'file'
+                msg = "m<" + OtherClient + "<" + msg
+                self.Sendfile()
                 
         if t == '2':
             print(self.MyContacts)
             OtherClient = input("Enter Client's ID :")
+            print("1. Send message")
+            print("2. Send File")
+            iuy = input('>>>')
+            if iuy == '1':
+                print('Enter \end to  End conversation')
+                msg = input(">>>")
+                while msg!='\end':
+                    msg = "m<" + OtherClient + "<" + msg
+                    self.Socket.sendall(msg.encode('UTF-8'))
+                    msg = input(">>>")
+            elif iuy == '2':
+                msg = 'file'
+                msg = "m<" + OtherClient + "<" + msg
+                self.Sendfile()
+                '''
             msg = input(">>>")
             while msg != '\end':
                 msg = "m<" + OtherClient + "<" + msg
                 self.Socket.sendall(msg.encode('UTF-8'))
-                msg = input(">>>")
-
+                msg = input(">>>")'''
+                
+    def Sendfile(self):
+        #filename = filedialog.askopenfilename(initialdir = "/",title = "Select file",filetypes = (("text file","*.txt"),("all files","*.*")))
+        filename = input('Enter file location:  ')
+        BUFFER_SIZE = 4096 # send 4096 bytes each time step
+        
+        #filename = "D:\hello.txt"
+        filesize = os.path.getsize(filename)
+        #s = socket.socket()
+        #print(f"[+] Connecting to {host}:{port}")
+        #s.connect((host, port))
+        #print("[+] Connected.")
+    
+        self.Socket.send(f"{filename} {filesize}".encode())
+    
+        progress = tqdm.tqdm(range(filesize), f"Sending {filename}", unit="B", unit_scale=True, unit_divisor=1024)
+        with open(filename, "rb") as f:
+            for _ in progress:
+                bytes_read = f.read(BUFFER_SIZE)
+                if not bytes_read:
+                    break
+                self.Socket.sendall(bytes_read)
+                progress.update(len(bytes_read))
+            
     def close(self):
         #       What it will do?
         #           it will close the socket
@@ -448,13 +500,14 @@ class Client:
     def Receive(self):
         while True:
             msgS = self.Socket.recv(1024).decode('UTF-8')
-            print(msgS)
+            #print(msgS)
             msg = msgS.split("<")
-            print(msg) # for debug purpose
+            #print(msg) # for debug purpose
             if msg[0] == 'res':     # it's a response from a server
                 if msg[1] == 'info':    # an info request responce
                     if msg[2][0] == 'S':
                         print(msg[2])
+                        
                     else:
                         for EachInfo in msg[2:-1]:
                             EachInfo = EachInfo.split(":")
@@ -466,7 +519,7 @@ class Client:
                                 print(f"Name :Not Saved", f"ID :{EachInfo[0]}", f"status :{EachInfo[1]}", sep='     ')
                 if msg[1] == 'cg':
                     self.MyGroups[msg[2]] = msg[3]
-                    print(self.MyGroups)
+                    print("\nGroup Created\n My Group are: \n", self.MyGroups)
                 if msg[1] == 'ca':
                     if msg[2] == 'True':
                         print("Group Admin has changed")
@@ -532,8 +585,8 @@ class Client:
         except socket.error as err:
             print("Socket creating error :", err)
             sys.exit("Socket creating error ")
-        ServerIP = 'localhost'
-        ServerPort = 8080
+        ServerIP = '192.168.1.26'
+        ServerPort = 12345
         ServerAdress = (ServerIP, ServerPort)
         try:
             print("connecting to server :", ServerAdress)
@@ -564,7 +617,7 @@ class Client:
                 elif temp is '2':
                     break
             elif self.MyStatus is False:     # I have't Sign in
-                print("1. Sign UP")
+                print("\n1. Sign UP")
                 print("2. Sign In")
                 temp = input(">>>")
                 if temp is '1':
@@ -574,7 +627,7 @@ class Client:
                     #print("loading data")
                     #self.LoadData()
             else:
-                print("1. Create New Group")
+                print("\n\n1. Create New Group")
                 print("2. Change Group Admin")
                 print("3. Add to Group")
                 print("4. Remove from Group")
@@ -618,6 +671,8 @@ class Client:
                     break
                 else:
                     print("Please Enter a Valid Option")
+                    
+            ##write here some thing## for clear sceenn
 
     def __init__(self):
         #       What it will do?
