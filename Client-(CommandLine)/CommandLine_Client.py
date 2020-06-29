@@ -2,6 +2,9 @@ import socket   # for creating sockets
 import sys      # for handling exceptions
 import json     # for saving data
 import threading
+import os
+import tqdm
+
 
 class Client:
     MyName = None     # My user name
@@ -12,6 +15,12 @@ class Client:
     # MyContacts = {'ID':'Name'}
     MyStatus = False   # I am online or offline
     Socket = None     # socket
+    Notifications = {'Requests': {}, 'Messages': []}
+    # formate:
+    # Notification = {
+    #                   'Requests' : { 'request' : 'Response'}
+    #                   'Messages' : []
+    #                   }
 
     ###############################################################################
     ###############################################################################
@@ -20,6 +29,7 @@ class Client:
     # 1. Request type (starts with: r<)
     # 2. Command type (starts with: c<)
     # 3. message type (starts with: m<)
+    # 4. request from server (starts with: req<)
     # In Request type
     #       SignUp Request
     #           request format: r<up<password
@@ -36,10 +46,10 @@ class Client:
     #           response format:res<cg<GroupID<GroupName (g+ID mean starts with g always)
     #       Remove from Group
     #           request format:c<rfg<Member's_ID<Group_ID
-    #           response format:res<rfg<'True'/'False'
+    #           response format:res<rfg<'True'/'False'<message from server
     #       Add to Group
     #           request format:c<atg<Member's_ID<Group_ID
-    #           response format:res<atg<'True'/'False'
+    #           response format:res<atg<'True'/'False'<message from server
     #       Change Admin
     #           request format:c<ca<New_Admin_ID<Group_ID
     #           response format:res<ca<'True'/'False'<New_Admin
@@ -50,6 +60,16 @@ class Client:
     #       Message in a Group
     #           request format:m<Group_ID<message
     #           response format: m<Group_ID<Sender_ID<message
+    # request from server type
+    #       Group Joining Request:
+    #           request from server : req<gjr<Group_ID<Group_Name
+    #           responce to server  : res<gjr<GID<Responce
+    #
+    # Responce types:
+    #           yes : agree to join group
+    #           not : not agree to join group
+    #           pen : pending responce
+    # by default server will use 'pen' or pending responce
     ###############################################################################
     ###############################################################################
 
@@ -145,6 +165,7 @@ class Client:
             for gID, Name in self.MyGroups.items():
                 print(f"Group ID :{gID} Group Name :{Name}")
             gID = input("Enter Group ID :")
+            # yield gID
             msg = msg + gID
             self.Socket.sendall(msg.encode('UTF-8'))
             '''info = self.Socket.recv(1024).decode('UTF-8')
@@ -161,6 +182,7 @@ class Client:
                         print(f"You ", f"ID :{EachInfo[0]}", f"status :{EachInfo[1]}", sep='     ')
                     else:
                         print(f"Name :Not Saved", f"ID :{EachInfo[0]}", f"status :{EachInfo[1]}", sep='     ')'''
+            return str(gID)
         else:
             print("Please Sign in")
 
@@ -227,7 +249,9 @@ class Client:
         while a != 'end':
             a = input("Enter User Id to Add in this Group:")
             rep = rep + a + ":"
+        
         self.Socket.sendall(rep.encode('UTF-8'))
+        #print(rep)
 
     def ChangeAdmin(self):
         #       What it will do?
@@ -260,7 +284,11 @@ class Client:
         #           > make request to server
         #           > take response from the server ('Admin changed'/'You are not the admin of this group')
         #       Other
-        pass
+        gID = self.GroupMembers()
+        cID = input("Select Group Member: ")
+        req = "c<rfg<" + cID + "<" + gID
+        print(req)
+        self.Socket.sendall(req.encode('UTF-8'))
 
     def AddToGroup(self):
         #       What it will do?
@@ -272,7 +300,13 @@ class Client:
         #           > make request to server
         #           > response from server
         #       Other
-        pass
+        req = "c<atg<"
+        print(self.MyGroups)
+        gID = input("Enter group ID: ")
+        print(self.MyContacts)
+        cID = input("Enter new member ID: ")
+        req = req + cID + "<" + gID
+        self.Socket.sendall(req.encode('UTF-8'))
 
     def GoOffline(self):    # will disconnect from server
         #       What it will do?
@@ -332,21 +366,68 @@ class Client:
         if t == '1':
             print(self.MyGroups)
             OtherClient = input("Enter Group ID :")
-            msg = input(">>>")
-            while msg!='\end':
-                msg = "m<" + OtherClient + "<" + msg
-                self.Socket.sendall(msg.encode('UTF-8'))
+            print("1. Send message")
+            print("2. Send File")
+            iuy = input('>>>')
+            if iuy == '1':
+                print('Enter \end to  End conversation')
                 msg = input(">>>")
+                while msg!='\end':
+                    msg = "m<" + OtherClient + "<" + msg
+                    self.Socket.sendall(msg.encode('UTF-8'))
+                    msg = input(">>>")
+            elif iuy == '2':
+                msg = 'file'
+                msg = "m<" + OtherClient + "<" + msg
+                self.Sendfile()
                 
         if t == '2':
             print(self.MyContacts)
             OtherClient = input("Enter Client's ID :")
+            print("1. Send message")
+            print("2. Send File")
+            iuy = input('>>>')
+            if iuy == '1':
+                print('Enter \end to  End conversation')
+                msg = input(">>>")
+                while msg!='\end':
+                    msg = "m<" + OtherClient + "<" + msg
+                    self.Socket.sendall(msg.encode('UTF-8'))
+                    msg = input(">>>")
+            elif iuy == '2':
+                msg = 'file'
+                msg = "m<" + OtherClient + "<" + msg
+                self.Sendfile()
+                '''
             msg = input(">>>")
             while msg != '\end':
                 msg = "m<" + OtherClient + "<" + msg
                 self.Socket.sendall(msg.encode('UTF-8'))
-                msg = input(">>>")
-
+                msg = input(">>>")'''
+                
+    def Sendfile(self):
+        #filename = filedialog.askopenfilename(initialdir = "/",title = "Select file",filetypes = (("text file","*.txt"),("all files","*.*")))
+        filename = input('Enter file location:  ')
+        BUFFER_SIZE = 4096 # send 4096 bytes each time step
+        
+        #filename = "D:\hello.txt"
+        filesize = os.path.getsize(filename)
+        #s = socket.socket()
+        #print(f"[+] Connecting to {host}:{port}")
+        #s.connect((host, port))
+        #print("[+] Connected.")
+    
+        self.Socket.send(f"{filename} {filesize}".encode())
+    
+        progress = tqdm.tqdm(range(filesize), f"Sending {filename}", unit="B", unit_scale=True, unit_divisor=1024)
+        with open(filename, "rb") as f:
+            for _ in progress:
+                bytes_read = f.read(BUFFER_SIZE)
+                if not bytes_read:
+                    break
+                self.Socket.sendall(bytes_read)
+                progress.update(len(bytes_read))
+            
     def close(self):
         #       What it will do?
         #           it will close the socket
@@ -360,17 +441,73 @@ class Client:
             print("socket closing error :",err)
             sys.exit("Socket closing error")
 
+    def ViewMesssages(self):
+        if len(self.Notifications['Messages']) == 0:
+            print("No Message")
+        else:
+            for EachMessage in self.Notifications['Messages']:
+                print(EachMessage)
+            # removing printed messages from self.Notifications['Messages']
+            self.Notifications['Messages'] = []
+
+    def ViewRequests(self):
+        if len(self.Notifications['Requests']) == 0:
+            print("\nNo Request")
+        else:
+            i = 0
+            
+            request = []
+            for EachRequest, resp in self.Notifications['Requests'].items():
+                request.append(EachRequest)
+                EachRequest = EachRequest.split("<")
+                tstr = f"{i}. Group ID: {EachRequest[2]} Group Name: {EachRequest[3]} Present Response: {resp}"
+                print(tstr)
+                i = i + 1
+            
+            print(request)
+            print("\n1. Change Response")
+            print("2. Exit")
+            op = input(">>>")
+            if op == '1':
+                rno = input("Enter Request No: ")
+                print("Enter 'yes' (for joining)")
+                print("Enter 'no' (for rejecting)")
+                print("Enter 'pending' (for later)")
+                resp = input(">>> ")
+                if resp != 'pending':
+                    ############################
+                    # building responce for sending to server
+                    gID = input("Enter Group ID: ")
+                    resp = "res<gjr<" + gID + "<" + resp
+                    lll = request[0]
+                    del self.Notifications['Requests'][lll]
+                    self.Socket.sendall(resp.encode('UTF-8'))
+                    
+
+
+    def NotificationHandler(self):
+        # it will handler Notification recieved by client
+        # it will handel request and Messages
+        if len(self.Notifications['Requests']) == 0:
+            print("\nNo Request")
+        else:
+            print(f"Got Requests ({len(self.Notifications['Requests'])})")
+        if len(self.Notifications['Messages']) == 0:
+            print("No Message")
+        else:
+            print(f"Got Messages ({len(self.Notifications['Messages'])})")
+
     def Receive(self):
         while True:
-            msg = self.Socket.recv(1024).decode('UTF-8')
-            msg = msg.split("<")
-            
-            print(msg) # for debug purpose
-            
+            msgS = self.Socket.recv(1024).decode('UTF-8')
+            #print(msgS)
+            msg = msgS.split("<")
+            #print(msg) # for debug purpose
             if msg[0] == 'res':     # it's a response from a server
                 if msg[1] == 'info':    # an info request responce
                     if msg[2][0] == 'S':
                         print(msg[2])
+                        
                     else:
                         for EachInfo in msg[2:-1]:
                             EachInfo = EachInfo.split(":")
@@ -382,9 +519,8 @@ class Client:
                                 print(f"Name :Not Saved", f"ID :{EachInfo[0]}", f"status :{EachInfo[1]}", sep='     ')
                 if msg[1] == 'cg':
                     self.MyGroups[msg[2]] = msg[3]
-                    print(self.MyGroups)
+                    print("\nGroup Created\n My Group are: \n", self.MyGroups)
                 if msg[1] == 'ca':
-
                     if msg[2] == 'True':
                         print("Group Admin has changed")
                         if msg[3] in self.MyContacts.keys():
@@ -395,18 +531,45 @@ class Client:
                     elif msg[2] == 'False':
                         print("Group Admin can not be changed")
                         print(msg[3])
-
+                if msg[1] == 'rfg':     # remove from group request, responce
+                    if msg[2] == 'True':    # removed
+                        print("Removed from group")
+                        print(msg[3])
+                    elif msg[2] == 'False':     # can not be removed
+                        print("Can not be Removed")
+                        print(msg[3])
+                if msg[1] == 'atg':     # add to group responce
+                    if msg[2] == 'True':    # added to group
+                        print(msg[3])
+                    elif msg[2] == 'False':     # can not be added to group
+                        print(msg[3])
+                if msg[1] == 'gjr':     # responce on group joining responce
+                    if msg[4] == 'True':    # added to the group
+                        self.MyGroups[msg[2]] = msg[3]  # setting group_ID and group_Name
+                        print("added to the group")
+                    elif msg[4] == 'False':
+                        print("can not be added to the group")
             elif msg[0] == 'm':     # a message
                 if msg[1][0] == 'g':        # a group ID
                     if msg[2] in self.MyContacts.keys():
-                        print(f"In Group --> {self.MyGroups[msg[1]]}<->{self.MyContacts[msg[2]]} --> {msg[3]}")
+                        tmsg = f"In Group --> {self.MyGroups[msg[1]]}<->{self.MyContacts[msg[2]]} --> {msg[3]}"
+                        self.Notifications['Messages'].append(tmsg)
                     else:
-                        print(f"In Group --> {self.MyGroups[msg[1]]}<->{msg[2]} --> {msg[3]}")
+                        tmsg = f"In Group --> {self.MyGroups[msg[1]]}<->{msg[2]} --> {msg[3]}"
+                        self.Notifications['Messages'].append(tmsg)
                 else:       # a user ID
                     if msg[1] in self.MyContacts.keys():
-                        print(f"{self.MyContacts[msg[1]]} --> {msg[2]}")
+                        tmsg = f"{self.MyContacts[msg[1]]} --> {msg[2]}"
+                        self.Notifications['Messages'].append(tmsg)
                     else:
-                        print(f"From {msg[1]} --> {msg[2]}")
+                        tmsg = f"From {msg[1]} --> {msg[2]}"
+                        self.Notifications['Messages'].append(tmsg)
+                self.NotificationHandler()
+            elif msg[0] == 'req':   # request from server
+                if msg[1] == 'gjr':     # a group joining request
+                    self.Notifications['Requests'][msgS] = 'pen'
+                    print(self.Notifications)
+                self.NotificationHandler()
 
     def ConnectToServer(self):
         #       What it will do?
@@ -422,8 +585,8 @@ class Client:
         except socket.error as err:
             print("Socket creating error :", err)
             sys.exit("Socket creating error ")
-        ServerIP = 'localhost'
-        ServerPort = 8080
+        ServerIP = '192.168.1.26'
+        ServerPort = 12345
         ServerAdress = (ServerIP, ServerPort)
         try:
             print("connecting to server :", ServerAdress)
@@ -454,7 +617,7 @@ class Client:
                 elif temp is '2':
                     break
             elif self.MyStatus is False:     # I have't Sign in
-                print("1. Sign UP")
+                print("\n1. Sign UP")
                 print("2. Sign In")
                 temp = input(">>>")
                 if temp is '1':
@@ -464,7 +627,7 @@ class Client:
                     #print("loading data")
                     #self.LoadData()
             else:
-                print("1. Create New Group")
+                print("\n\n1. Create New Group")
                 print("2. Change Group Admin")
                 print("3. Add to Group")
                 print("4. Remove from Group")
@@ -474,7 +637,9 @@ class Client:
                 print("8. Add New Contact")
                 print("9. Contacts")
                 print("a. View Group Members")
-                print("b. Exit")
+                print("b. View Messages")
+                print("c. View Requests")
+                print("d. Exit")
                 temp = input(">>>")
                 if temp is '1':
                     self.CreateGroup()
@@ -497,11 +662,17 @@ class Client:
                 elif temp is 'a':
                     self.GroupMembers()
                 elif temp is 'b':
+                    self.ViewMesssages()
+                elif temp is 'c':
+                    self.ViewRequests()
+                elif temp is 'd':
                     #self.SaveData()
                     self.Socket.close()
                     break
                 else:
                     print("Please Enter a Valid Option")
+                    
+            ##write here some thing## for clear sceenn
 
     def __init__(self):
         #       What it will do?
@@ -519,4 +690,3 @@ class Client:
 
 if __name__ == '__main__':
     MyClient = Client()
-
