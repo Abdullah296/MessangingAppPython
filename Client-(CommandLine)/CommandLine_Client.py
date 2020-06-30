@@ -443,28 +443,33 @@ class Client:
             print("\nNo Request")
         else:
             i = 0
-            print(self.Notifications['Requests'])
+            
+            request = []
             for EachRequest, resp in self.Notifications['Requests'].items():
+                request.append(EachRequest)
                 EachRequest = EachRequest.split("<")
-                tstr = f"{i}. Group ID: {EachRequest[2]} Group Name: {EachRequest[3]} Present Responce: {resp}"
+                tstr = f"{i}. Group ID: {EachRequest[2]} Group Name: {EachRequest[3]} Present Response: {resp}"
                 print(tstr)
                 i = i + 1
-
-            print("1. Change Responce")
-            print("2. Exist")
-            op = self.MyInput(">>>")
+            
+            #print(request)
+            print("\n1. Change Response")
+            print("2. Exit")
+            op = input(">>>")
             if op == '1':
+                rno = input("Enter Request No: ")
                 print("Enter 'yes' (for joining)")
                 print("Enter 'no' (for rejecting)")
-                print("Enter 'pen' (for latter)")
-                resp = self.MyInput(">>>")
-                if resp != 'pen':
+                print("Enter 'pending' (for later)")
+                resp = input(">>> ")
+                if resp != 'pending':
                     ############################
                     # building responce for sending to server
                     gID = input("Enter Group ID: ")
                     resp = "res<gjr<" + gID + "<" + resp
+                    lll = request[0]
+                    del self.Notifications['Requests'][lll]
                     self.Socket.sendall(resp.encode('UTF-8'))
-                    #del self.Notifications['Requests'][]
             elif op == '2':
                 pass
             else:
@@ -486,9 +491,9 @@ class Client:
     def Receive(self):
         while True:
             msgS = self.Socket.recv(1024).decode('UTF-8')
-            print(msgS)
+            #print(msgS)
             msg = msgS.split("<")
-            print(msg) # for debug purpose
+            #print(msg) # for debug purpose
             if msg[0] == 'res':     # it's a response from a server
                 if msg[1] == 'info':    # an info request responce
                     if msg[2][0] == 'S':
@@ -542,11 +547,13 @@ class Client:
             elif msg[0] == 'm':     # a message
                 if msg[1][0] == 'g':        # a group ID
                     if msg[2] in self.MyContacts.keys():
-                        tmsg = f"In Group --> {self.MyGroups[msg[1]]} <-> {self.MyContacts[msg[2]]} --> {msg[3]}"
-                        self.Notifications['Messages'].append(tmsg)
+                        if(msg[2] != self.MyId):
+                            tmsg = f"In Group --> {self.MyGroups[msg[1]]} <-> {self.MyContacts[msg[2]]} --> {msg[3]}"
+                            self.Notifications['Messages'].append(tmsg)
                     else:
-                        tmsg = f"In Group --> {self.MyGroups[msg[1]]} <-> {msg[2]} --> {msg[3]}"
-                        self.Notifications['Messages'].append(tmsg)
+                        if(msg[2] != self.MyId):
+                            tmsg = f"In Group --> {self.MyGroups[msg[1]]} <-> {msg[2]} --> {msg[3]}"
+                            self.Notifications['Messages'].append(tmsg)
                 else:       # a user ID
                     if msg[1] in self.MyContacts.keys():
                         tmsg = f"{self.MyContacts[msg[1]]} --> {msg[2]}"
@@ -558,7 +565,7 @@ class Client:
             elif msg[0] == 'req':   # request from server
                 if msg[1] == 'gjr':     # a group joining request
                     self.Notifications['Requests'][msgS] = 'pen'
-                    print(self.Notifications)
+                    #print(self.Notifications)
                 self.NotificationHandler()
 
     def ConnectToServer(self):
